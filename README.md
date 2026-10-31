@@ -160,6 +160,12 @@ Visit `http://127.0.0.1:5000` in your browser.
 ## 📸 Screenshots
 
 > *(Add screenshots of Admin Dashboard, Household Dashboard, Worker Dashboard, and Rewards page here)*
+<img width="1920" height="1020" alt="Screenshot 2026-10-02 155401" src="https://github.com/user-attachments/assets/aa87237a-efc7-4931-adcd-a383ee70f6e8" />
+<img width="1920" height="1020" alt="Screenshot 2026-10-02 140134" src="https://github.com/user-attachments/assets/e04f4c4e-6cbf-4174-9209-08dd3a23442f" />
+<img width="1920" height="1020" alt="Screenshot 2026-10-02 140205" src="https://github.com/user-attachments/assets/80a2f816-d6f7-4aee-b4f2-ee925d1b9dbe" />
+<img width="1920" height="1020" alt="Screenshot 2026-10-02 140505" src="https://github.com/user-attachments/assets/5121d400-f87c-4f4f-875e-0534ffd34781" />
+<img width="1920" height="1020" alt="Screenshot 2026-10-02 140533" src="https://github.com/user-attachments/assets/751ccba1-d2a6-4d1a-9646-18ef6907d613" />
+<img width="1920" height="1020" alt="Screenshot 2026-10-02 140744" src="https://github.com/user-attachments/assets/a8a794fa-26c0-4ddb-a138-85b1bfdcf32b" />
 
 ---
 
