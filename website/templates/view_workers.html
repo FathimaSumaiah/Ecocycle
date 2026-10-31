@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Collection Workers - EcoCycle Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pending_households.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/view_workers.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="toast-container" style="position:fixed; top:20px; right:20px; z-index:9999;">
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+{% if category == 'success' %}
+<div class="flash-toast" style="background:#16A34A; color:#fff; padding:12px 18px; margin-bottom:8px; border-radius:8px; font-size:13px; font-weight:600;">✓ {{ message }}</div>
+{% elif category == 'error' %}
+<div class="flash-toast" style="background:#DC2626; color:#fff; padding:12px 18px; margin-bottom:8px; border-radius:8px;">✗ {{ message }}</div>
+{% else %}
+<div class="flash-toast" style="background:#2563EB; color:#fff; padding:12px 18px; margin-bottom:8px; border-radius:8px;">{{ message }}</div>
+{% endif %}    {% endfor %}
+    <script>setTimeout(()=>{document.getElementById('toast-container').style.display='none'},3000)</script>
+  {% endif %}
+{% endwith %}
+</div>
+<div class="app">
+    <main class="main">
+        <div style="margin-bottom:12px;">
+      <a href="/admin_dashboard" style="display:inline-flex; align-items:center; gap:6px; background:#141413; border:1px solid #E6E0D0; padding:8px 14px; border-radius:8px; text-decoration:none; font-family:'JetBrains Mono'; font-size:12px; color:#ffffff;">← Back</a>
+    </div>
+        <header class="main-header">
+            <div>
+                <h1 class="page-title">Collection Workers</h1>
+                <p class="page-subtitle">WORKFORCE · {{ workers|length }} REGISTERED WORKERS</p>
+            </div>
+            <a href="/add_worker" class="btn-primary" style="text-decoration:none; background:#10201A; color:white; padding:10px 18px; border-radius:10px; font-family:'JetBrains Mono'; font-size:12px;">+ ADD WORKER</a>
+        </header>
+
+        <div class="toolbar">
+            <div class="search-box">
+                <span>🔍</span>
+                <input type="text" id="searchInput" placeholder="Search worker..." onkeyup="filterWorkers()">
+            </div>
+            <div class="filters">
+                <select class="select" id="wardFilter" onchange="filterWorkers()">
+                    <option value="all">All Wards</option>
+                    {% for w in all_wards %}
+                        <option value="{{ w['ward_no'] }}">Ward {{ w['ward_no'] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <section class="card">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>WORKER ID</th>
+                            <th>FULL NAME</th>
+                            <th>EMAIL</th>
+                            <th>PHONE</th>
+                            <th>STREET</th>
+                            <th>CITY</th>
+                            <th>DISTRICT</th>
+                            <th>PINCODE</th>
+                            <th>ID PROOF</th>
+                            <th>QUALIFICATION</th>
+                            <th>WARD</th>
+                            <th>AREA</th>
+                            <th>ACTION</th>
+                        </tr>
+                    </thead>
+<tbody id="workerTableBody">
+{% for w in workers %}
+<tr data-ward="{{ w['ward_no'] }}" data-name="{{ w['full_name']|lower }}">
+    <td>{{ w['worker_id'] }}</td>
+    <td><strong>{{ w['full_name'] }}</strong></td>
+    <td>{{ w['email'] }}</td>
+    <td>{{ w['phone'] }}</td>
+    <td>{{ w['street'] }}</td>
+    <td>{{ w['city'] }}</td>
+    <td>{{ w['district'] }}</td>
+    <td>{{ w['pincode'] }}</td>
+    <td>
+        {% if w['id_proof'] %}
+        <a href="/view_aadhaar/worker/{{ w['worker_id'] }}" class="link">View</a>
+        {% else %}-{% endif %}
+    </td>
+    <td>{{ w['qualification'] if w['qualification'] else '-' }}</td>
+    <td><span class="ward-pill">Ward {{ w['ward_no'] }}</span></td>
+    <td>{{ w['area'] }}</td>
+    <td>
+    <div class="action-btns">
+        <div style="display:flex; gap:6px;">
+            <a href="/edit_worker/{{ w['worker_id'] }}" class="btn-edit">Edit</a>
+            <a href="/delete_worker/{{ w['worker_id'] }}" class="btn-delete" onclick="return confirm('Delete {{ w['full_name'] }}?')">Delete</a>
+        </div>
+    </div>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script>
+function filterWorkers() {
+    let search = document.getElementById("searchInput").value.toLowerCase();
+    let ward = document.getElementById("wardFilter").value;
+    document.querySelectorAll("#workerTableBody tr").forEach(row => {
+        let matchSearch = row.textContent.toLowerCase().includes(search);
+        let matchWard = (ward === "all" || row.dataset.ward == ward);
+        row.style.display = (matchSearch && matchWard)? "" : "none";
+    });
+}
+</script>
+</body>
+</html>

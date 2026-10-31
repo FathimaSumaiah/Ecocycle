@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EcoCycle Admin - Today's Operations</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_dashboard.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+   .status-pending{background:#E8A87C; color:#1A3C34; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700;}
+   .status-completed{background:#B5C99A; color:#1A3C34; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700;}
+   .status-assigned{background:#1A3C34; color:#fff; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700;}
+   .status-rejected{background:#C94C4C; color:#fff; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700;}
+   .mono-small{font-family:'JetBrains Mono'; font-size:11px;}
+   .festive-wrap{display:flex; align-items:center; gap:12px; background:#fff; border:1.5px solid #E5E7EB; padding:10px 18px; border-radius:50px; transition:.3s;}
+   .festive-wrap.on{background:linear-gradient(135deg,#FFF7ED,#FFEDD5); border-color:#FF8C00; box-shadow:0 4px 14px rgba(255,140,0,.25);}
+   .switch{position:relative; width:52px; height:28px; display:inline-block; cursor:pointer;}
+   .switch input{display:none;}
+   .slider{position:absolute; inset:0; background:#E5E7EB; border-radius:34px; transition:.3s;}
+   .slider:before{content:""; position:absolute; height:22px; width:22px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.3s; box-shadow:0 2px 5px rgba(0,0,0,.2);}
+   .switch input:checked +.slider{background:linear-gradient(135deg,#FF8C00,#FF3B30); box-shadow:0 0 10px rgba(255,107,53,.5);}
+   .switch input:checked +.slider:before{transform:translateX(24px);}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="sidebar-logo"><div class="logo-icon">EC</div><span>EcoCycle Admin</span></div>
+      <nav class="sidebar-nav">
+        <p class="nav-section">OVERVIEW</p><a class="nav-item active">Dashboard</a>
+        <a href="{{ url_for('admin_todays_requests') }}" class="nav-item" style="color: inherit; text-decoration: none;">📋 Today's Requests</a>
+        <a href="/admin/collhistory" class="nav-item" style="color: inherit; text-decoration: none;">📦 Collection History</a>
+        <p class="nav-section">HOUSEHOLDS</p>
+        <a href="{{ url_for('pending_households') }}" class="nav-item" style="color: inherit; text-decoration: none;"><span>Pending Approvals</span><span class="badge">{{ pending_count }}</span></a>
+        <a href="{{ url_for('view_households') }}" class="nav-item" style="color: inherit; text-decoration: none;">All Households</a>
+        <a href="{{ url_for('admin_feedbacks') }}" class="nav-item" style="color: inherit; text-decoration: none;">Feedbacks & Complaints💬 </a>
+        <p class="nav-section">WORKFORCE</p>
+        <a href="{{ url_for('view_workers') }}" class="nav-item" style="color: inherit; text-decoration: none;">Collection Workers</a>
+        <a href="{{ url_for('add_worker') }}" class="nav-item" style="color: inherit; text-decoration: none;">Add Worker</a>
+        <a href="/admin/worker_leaves" class="nav-item" style="color: inherit; text-decoration: none;">📅 Worker Leaves </a>
+        <a href="{{ url_for('view_staff') }}" class="nav-item" style="color: inherit; text-decoration: none;">Recycling Staff</a>
+        <a href="{{ url_for('add_staff') }}" class="nav-item" style="color: inherit; text-decoration: none;">Add Staff</a>
+        <p class="nav-section">CONFIGURATION</p>
+        <a href="{{ url_for('add_area') }}" class="nav-item" style="color: inherit; text-decoration: none;">Wards & Areas</a>
+        <a href="{{ url_for('wastes_rewards') }}" class="nav-item" style="color: inherit; text-decoration: none;">Waste Categories </a>
+        <a href="{{ url_for('recycled_products') }}" class="nav-item" style="color: inherit; text-decoration: none;">Recycled Products</a>
+        <p class="nav-section">REVENUE</p>
+        <a href="/admin/viewinventory" class="nav-item" style="color: inherit; text-decoration: none;">Inventory</a>
+        <a href="{{ url_for('admin_viewsales') }}" class="nav-item" style="color: inherit; text-decoration: none;">Sales Log</a>
+        <p class="nav-section">REWARDS</p>
+        <a href="{{ url_for('admin_rewards_redeem') }}" class="nav-item" style="color: inherit; text-decoration: none;">Redeem Requests</a>
+
+      </nav>
+    </aside>
+    <main class="main">
+      <header class="main-header">
+        <div><h1 class="page-title">Welcome Admin!</h1><p class="page-subtitle">{{ today_date }} · </p></div>
+                <div class="festive-wrap {% if festive_mode %}on{% endif %}">
+          <span style="font-weight:800; font-size:13px;">🎉 Festive Mode</span>
+          <form method="POST" action="{% if festive_mode %}/admin/toggle_normal{% else %}/admin/toggle_festive{% endif %}" style="margin:0;">
+            <label class="switch">
+              <input type="checkbox" {% if festive_mode %}checked{% endif %} onchange="if(this.checked){this.form.action='/admin/toggle_festive'}else{this.form.action='/admin/toggle_normal'}; this.form.submit();">
+              <span class="slider"></span>
+            </label>
+          </form>
+          <span style="font-family:'JetBrains Mono'; font-size:11px; font-weight:800; color:{% if festive_mode %}#FF6B35{% else %}#6B7280{% endif %};">{% if festive_mode %}ON • 35 houses till 7 PM{% else %}OFF • 5 houses till 5 PM{% endif %}</span>
+        </div>
+<div class="user-chip-wrapper">
+  <div class="user-chip" onclick="toggleMenu()">
+    <span class="avatar">{{ session['admin_name'][0]|upper }}</span>
+    {{ session['admin_name'] }}
+  </div>
+
+  <div id="userMenu" class="user-dropdown">
+    <a href="/admin_profile" class="profile-link">👤 View Profile</a>
+    <a href="/logout" class="logout-red">Logout</a>
+  </div>
+</div>
+
+<style>
+.user-chip-wrapper{position:relative;display:inline-block}
+.user-chip{display:flex;align-items:center;gap:8px;background:#fff;padding:6px 14px;border-radius:25px;font-weight:600;cursor:pointer;border:1px solid #E5E7EB}
+.avatar{width:28px;height:28px;background:#1A3C34;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800}
+.user-dropdown{display:none;position:absolute;right:0;top:48px;background:#FFFFFF;min-width:180px;border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,0.18);z-index:999;overflow:hidden;border:1px solid #E5E7EB}
+.user-dropdown.show{display:block}
+
+.profile-link{display:block;padding:12px 16px;text-decoration:none;color:#1A3C34;font-size:14px;font-weight:500;background:#fff}
+.profile-link:hover{background:#F3F4F6}
+
+/* PURE RED LOGOUT - NO BROWN */
+.logout-red{
+  display:block;
+  margin:0;
+  padding:12px 16px;
+  text-align:left;
+  background:#DC2626;
+  color:#fff!important;
+  text-decoration:none;
+  font-weight:700;
+  font-size:14px;
+}
+.logout-red:hover{
+  background:#B91C1C;
+}
+</style>
+
+<script>
+function toggleMenu(){
+  document.getElementById('userMenu').classList.toggle('show');
+}
+window.addEventListener('click', function(e){
+  if(!e.target.closest('.user-chip-wrapper')){
+    document.getElementById('userMenu')?.classList.remove('show');
+  }
+});
+</script>
+
+<script>
+function toggleMenu(){
+  document.getElementById('userMenu').classList.toggle('show');
+}
+window.addEventListener('click', function(e){
+  if(!e.target.closest('.user-chip-wrapper')){
+    document.getElementById('userMenu').classList.remove('show');
+  }
+});
+</script>
+
+<style>
+.user-chip-wrapper{position:relative;display:inline-block}
+.user-chip{display:flex;align-items:center;gap:8px;background:#fff;padding:6px 14px;border-radius:25px;font-weight:600;cursor:pointer;border:1px solid #e0e0e0}
+.avatar{width:28px;height:28px;background:#2A6B5E;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800}
+.user-dropdown{display:none;position:absolute;right:0;top:45px;background:#fff;min-width:160px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.12);z-index:999;overflow:hidden;border:1px solid #eee}
+.user-dropdown a{display:block;padding:10px 14px;text-decoration:none;color:#333;font-size:14px;font-weight:500}
+.user-dropdown a:hover{background:#F0FAF3;color:#2A6B5E}
+.user-dropdown.show{display:block}
+</style>
+
+<script>
+function toggleMenu(){
+  document.getElementById('userMenu').classList.toggle('show');
+}
+// close if click outside
+window.addEventListener('click', function(e){
+  if(!e.target.closest('.user-chip-wrapper')){
+    document.getElementById('userMenu').classList.remove('show');
+  }
+});
+</script>
+      </header>
+      <section class="stats-grid">
+            <div class="stat-card"><span class="stat-value orange">{{ pending_count }}</span><span class="stat-label">Pending Approvals</span></div>
+            <div class="stat-card"><span class="stat-value">{{ total_households }}</span><span class="stat-label">Total Households</span></div>
+            <div class="stat-card"><span class="stat-value teal">{{ total_workers }}</span><span class="stat-label">Collection Workers</span></div>
+            <div class="stat-card"><span class="stat-value red">{{ total_staff }}</span><span class="stat-label">Recycling Staff</span></div>
+            <div class="stat-card"><span class="stat-value">{{ total_categories }}</span><span class="stat-label">Waste Categories</span></div>
+            <div class="stat-card"><span class="stat-value orange">{{ total_rewards }}</span><span class="stat-label">Pending Rewards</span></div>
+            <div class="stat-card"><span class="stat-value teal">{{ collected_today }}</span><span class="stat-label">Collected Today</span></div>
+            {% if inventory_summary is defined %}
+            <div class="stat-card"><span class="stat-value teal">{{ inventory_summary['total_kg']|round(1) }} kg + {{ inventory_summary['total_count'] }} count</span><span class="stat-label">Inventory Stock (KG+COUNT)</span></div>
+            <div class="stat-card"><span class="stat-value">₹{{ total_sales_amount }}</span><span class="stat-label">Revenue Today (Admin Only)</span></div>
+            {% endif %}
+        </section>
+
+        <!-- Waste Distribution Pie Chart Card -->
+        <section class="card" style="margin-bottom:20px;">
+          <div class="card-head">
+            <h2>📊 Total Wastes Distribution (KG)</h2>
+          </div>
+          <div style="display:grid; grid-template-columns: 300px 1fr; gap: 24px; align-items:center; padding: 10px 0;">
+            <div style="max-width: 300px; max-height: 300px; position:relative; margin:0 auto;">
+              <canvas id="wastePieChart"></canvas>
+            </div>
+            <div>
+              <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap:12px;">
+                {% for cat in waste_by_category %}
+                <div style="background:#F9FAFB; border:1px solid #E5E7EB; border-radius:10px; padding:12px 16px; border-left:4px solid {% if loop.index0 == 0 %}#2A6B5E{% elif loop.index0 == 1 %}#E8A87C{% elif loop.index0 == 2 %}#2563EB{% elif loop.index0 == 3 %}#059669{% elif loop.index0 == 4 %}#D97706{% else %}#8B5CF6{% endif %};">
+                  <div style="font-size:12px; font-weight:600; color:#374151;">{{ cat['category_name'] }}</div>
+                  <div style="font-family:'Fraunces', serif; font-size:20px; font-weight:700; color:#111827; margin-top:2px;">{{ cat['total_kg']|round(1) }} <small style="font-size:12px; font-weight:400; color:#6B7280;">kg</small></div>
+                </div>
+                {% else %}
+                <div style="color:#6B7280; font-size:13px;">No waste collected yet.</div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+        document.addEventListener("DOMContentLoaded", function() {
+          const ctx = document.getElementById('wastePieChart');
+          if (!ctx) return;
+          
+          const labels = [{% for cat in waste_by_category %}"{{ cat['category_name'] }}"{% if not loop.last %}, {% endif %}{% endfor %}];
+          const data = [{% for cat in waste_by_category %}{{ cat['total_kg']|round(2) }}{% if not loop.last %}, {% endif %}{% endfor %}];
+          
+          const colors = [
+            '#2A6B5E', '#E8A87C', '#2563EB', '#059669', '#D97706',
+            '#8B5CF6', '#EC4899', '#14B8A6', '#F59E0B', '#6366F1'
+          ];
+
+          new Chart(ctx, {
+            type: 'pie',
+            data: {
+              labels: labels,
+              datasets: [{
+                data: data,
+                backgroundColor: colors.slice(0, labels.length),
+                borderWidth: 2,
+                borderColor: '#ffffff'
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              plugins: {
+                legend: {
+                  position: 'bottom',
+                  labels: {
+                    font: { family: 'Inter', size: 12 },
+                    padding: 14
+                  }
+                },
+                tooltip: {
+                  callbacks: {
+                    label: function(context) {
+                      const label = context.label || '';
+                      const value = context.parsed || 0;
+                      return ` ${label}: ${value} kg`;
+                    }
+                  }
+                }
+              }
+            }
+          });
+        });
+        </script>
+
+        <section class="card"><div class="card-head"><h2>Pending Household Approvals</h2><a href="{{ url_for('pending_households') }}" class="link">View All →</a></div><div class="table-wrap"><table><thead><tr><th>#</th><th>APPLICANT</th><th>WARD</th><th>HOUSE NO.</th><th>PHONE</th><th>UPI ID</th><th>AADHAAR</th><th>SUBMITTED</th><th>ACTION</th></tr></thead><tbody>{% if pending_households %}{% for h in pending_households %}<tr><td class="mono">{{ loop.index }}</td><td><strong>{{ h['full_name'] }}</strong></td><td><span class="ward-pill">Ward {{ h['ward_no'] }}</span></td><td>{{ h['house_no'] }}</td><td>{{ h['phone'] }}</td><td style="font-family:'JetBrains Mono'; font-size:12px;">{{ h['upi_id'] or '-' }}</td><td><a href="/view_aadhaar/household/{{ h['household_id'] }}" class="link">View Aadhaar</a></td><td class="mono" style="font-size:11px;">{{ h['created_at'].strftime('%d-%m-%Y %H:%M') if h['created_at'] else '-' }}</td><td><form action="{{ url_for('approve_household', household_id=h['household_id']) }}" method="POST" style="display:flex; gap:6px; align-items:center;"><select name="area" required style="padding:4px; border-radius:6px; border:1px solid #ddd; font-size:12px; min-width:120px;"><option value="">Select Area</option>{% for ar in areas_list if ar['ward_no']|string == h['ward_no']|string %}<option value="{{ ar['area_name'] }}">{{ ar['area_name'] }}</option>{% endfor %}</select><button class="btn btn-approve" type="submit">Approve</button><a href="{{ url_for('reject_household', household_id=h['household_id']) }}" class="btn btn-reject" onclick="return confirm('Reject?')">Reject</a></form></td></tr>{% endfor %}{% else %}<tr><td colspan="9" style="text-align:center; padding:30px;">No pending household registrations.</td></tr>{% endif %}</tbody></table></div></section>
+      <section class="card"><div class="card-head"><h2>Ward Ledger</h2><div class="legend"><span class="dot pending"></span> Pending <span class="dot approved"></span> Houses <span class="dot collected"></span> Today</div></div><div class="table-wrap"><table><thead><tr><th>WARD</th><th>WORKERS</th><th>TOTAL HOUSES</th><th>TODAY PROGRESS</th><th>KG TODAY</th></tr></thead><tbody>{% for ward in ward_ledger %}<tr><td><span class="ward-pill">Ward {{ ward['ward_no'] }}</span></td><td>{{ ward['worker_count'] }} workers</td><td>{{ ward['total_houses'] }}</td><td style="font-family:'JetBrains Mono'; font-size:12px;">{% set pct = (ward['collected_today'] / ward['total_houses'] * 100)|int if ward['total_houses']>0 else 0 %}{{ ward['collected_today'] }}/{{ ward['total_houses'] }} ({{ pct }}%) — {{ ward['collected_today'] }}C · {{ ward['rejected_today'] }}R</td><td>{{ ward['kg_today']|round(1) }} kg</td></tr>{% else %}<tr><td colspan="6" style="text-align:center; padding:20px;">No wards found</td></tr>{% endfor %}</tbody></table></div></section>
+      
+       <section class="card">
+        <div class="card-head" style="display:flex; justify-content:space-between; align-items:center;">
+          <h2>Today's Requests <span style="font-size:12px; font-weight:500; color:#6B7280;">(Showing 5 latest)</span></h2>
+          <a href="{{ url_for('admin_todays_requests') }}" class="link" style="font-weight:700;">View All ({{ total_todays_requests_count if total_todays_requests_count is defined else todays_requests|length }}) →</a>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>WORKER NAME</th>
+                <th>HOUSEHOLD (Name / Ward / Area / H.No)</th>
+                <th>STATUS</th>
+                <th>WASTE TYPE</th>
+                <th>KG</th>
+                <th>POINTS EARNED</th>
+                <th>TIME</th>
+                <th>REASSIGN WORKER</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in todays_requests %}
+              <tr>
+                <td class="mono">{{ loop.index }}</td>
+                <td>
+                  {% if r['is_worker_on_leave'] %}
+                    <strong style="color:#DC2626;">{{ r['worker_name'] or 'Not Assigned' }}</strong>
+                    <br><span style="background:#FEE2E2; color:#DC2626; border:1px solid #FCA5A5; font-size:10px; padding:2px 6px; border-radius:4px; font-weight:700;">🔴 ON LEAVE TODAY</span>
+                  {% else %}
+                    <strong>{{ r['worker_name'] or 'Not Assigned' }}</strong>
+                  {% endif %}
+                  <br><span class="mono-small" style="color:#8B8B8B;">{{ r['worker_phone'] or '' }}</span>
+                </td>
+                <td>
+                  <strong>{{ r['household_name'] }}</strong>
+                  <br><span class="mono-small">Ward {{ r['ward_no'] }} · {{ r['area'] }} · H.No {{ r['house_no'] }}</span>
+                  <br><span class="mono-small" style="color:#8B8B8B;">{{ r['phone'] }}</span>
+                </td>
+                <td>
+                  {% if r['status']=='Pending' %}
+                    <span class="status-pending">{{ r['status'] }}</span>
+                  {% elif r['status']=='Completed' %}
+                    <span class="status-completed">{{ r['status'] }}</span>
+                  {% elif r['status']=='Assigned' %}
+                    <span class="status-assigned">{{ r['status'] }}</span>
+                  {% else %}
+                    <span class="status-rejected">{{ r['status'] }}</span>
+                  {% endif %}
+
+                  {% if r['is_stuck_over_1hr'] %}
+                    <br><span style="background:#FEF2F2; color:#991B1B; border:1px solid #FCA5A5; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:700; display:inline-block; margin-top:4px;">⚠️ Pending > 1 hr</span>
+                  {% endif %}
+                </td>
+                <td><span style="font-family:'Fraunces'; font-weight:600;">{{ r['waste_type'] or '-' }}</span></td>
+                <td>
+                  {% if r['weight_details'] and ',' in r['weight_details'] %}
+                    <span style="font-size:12px; font-weight:700;">{{ r['weight_details'] }}</span><br><small style="color:#6B7280; font-weight:700;">(Total: {{ r['weight_kg']|round(2) }} kg)</small>
+                  {% elif r['weight_details'] %}
+                    <strong>{{ r['weight_details'] }}</strong>
+                  {% else %}
+                    <strong>{{ r['weight_kg']|round(2) if r['weight_kg'] else 0 }} kg</strong>
+                  {% endif %}
+                </td>
+                <td><strong style="color:#1A3C34;">{{ r['points'] or 0 }} pts</strong></td>
+                <td class="mono-small">{{ r['created_at'].strftime('%H:%M') if r['created_at'] else '-' }}</td>
+                <td>
+                  {% if r['status'] in ['Pending','Assigned'] %}
+                  <form action="/admin/reassign_request/{{ r['id'] }}" method="POST" style="display:flex; gap:4px; align-items:center;">
+                    <select name="worker_id" required style="font-size:11px; padding:3px; border-radius:4px; border:1px solid {% if r['is_worker_on_leave'] or r['is_stuck_over_1hr'] %}#DC2626{% else %}#ccc{% endif %}; max-width:120px; background:{% if r['is_worker_on_leave'] or r['is_stuck_over_1hr'] %}#FFF5F5{% else %}#fff{% endif %};">
+                      <option value="">Reassign to...</option>
+                      {% for wk in workers_all %}
+                      <option value="{{ wk['worker_id'] }}" {% if r['worker_id'] == wk['worker_id'] %}selected{% endif %}>{{ wk['full_name'] }} (W{{ wk['ward_no'] }})</option>
+                      {% endfor %}
+                    </select>
+                    <button type="submit" style="font-size:10px; background:{% if r['is_worker_on_leave'] or r['is_stuck_over_1hr'] %}#DC2626{% else %}#1A3C34{% endif %}; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-weight:700; cursor:pointer;">
+                      {% if r['is_worker_on_leave'] or r['is_stuck_over_1hr'] %}Reassign{% else %}Assign{% endif %}
+                    </button>
+                  </form>
+                  {% else %}
+                  <span class="mono" style="font-size:11px;">-</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="9" style="text-align:center; padding:30px; color:#8B8B8B;">No requests today</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section class="card"><div class="card-head"><h2>Worker Performance</h2><span class="mono">today · pending / assigned / completed / not home / kg</span></div><div class="table-wrap"><table><thead><tr><th>WORKER</th><th>WARD</th><th>PENDING</th><th>ASSIGNED</th><th>COMPLETED</th><th>NOT HOME</th><th>KG TODAY</th><th>LAST ACTIVE</th><th>STATUS</th></tr></thead><tbody>{% for w in worker_performance %}<tr><td>{{ w['full_name'] }}</td><td><span class="ward-pill">Ward {{ w['ward_no'] }}</span></td><td><strong style="color:#D96C33;">{{ w['pending'] }}</strong></td><td><strong style="color:#2563EB;">{{ w['assigned'] }}</strong></td><td><strong>{{ w['completed'] }}</strong></td><td>{{ w['rejected'] }}</td><td>{{ w['kg_today']|round(1) }} kg</td><td class="mono" style="font-size:11px;">{{ w['last_active'].strftime('%H:%M') if w['last_active'] else '-' }}</td><td><span class="status ok">{{ w['status'] }}</span></td></tr>{% else %}<tr><td colspan="9" style="text-align:center; padding:20px;">No workers found</td></tr>{% endfor %}</tbody></table></div></section>
+    </main>
+  </div>
+  {% include 'ai_chat_widget.html' %} {# [AI-CHATBOT] remove this line to undo #}
+</body>
+</html>

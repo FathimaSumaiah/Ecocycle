@@ -1,0 +1,7 @@
+/* Reuse existing styles - matches pending_households + add_worker */
+@import url('pending_households.css');
+@import url('add_worker.css');
+
+.form-card { border:1.5px solid #1A2A24; }
+.ward-pill { background:#E3F2FD; color:#1565C0; border:1px solid #90CAF9; }
+.points-badge { background:#E8F5E9; color:#2E7D32; }

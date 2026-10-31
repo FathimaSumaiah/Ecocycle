@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EcoCycle - Recycled Products</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pending_households.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/add_worker.css') }}" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    .price-card{background:#fff; border-radius:16px; padding:24px; border:1px solid #E8E2D9;}
+    .add-card{background:#F5F1EB; border-radius:16px; padding:24px; border:1.5px dashed #D9D2C7; margin-bottom:22px;}
+    .add-card h2{font-family:'Fraunces'; margin:0 0 14px; font-size:20px;}
+    .form-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+    .form-group{display:flex; flex-direction:column; gap:6px;}
+    .form-group.full{grid-column:1 / -1;}
+    .form-group label{font-family:'Inter'; font-size:12px; font-weight:600; color:#1A3C34;}
+    .form-group input,.form-group select{padding:11px 12px; border-radius:8px; border:1.5px solid #D9D2C7; font-family:'JetBrains Mono'; font-size:13px; background:#fff;}
+    .form-group small{font-size:11px; color:#8B8B8B; font-family:'JetBrains Mono';}
+    .btn-save{background:#1A3C34; color:#fff; border:none; padding:14px 28px; border-radius:10px; font-weight:700; cursor:pointer; margin-top:8px;}
+    .filter-bar{display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin:18px 0; padding:14px 16px; background:#FFFCF5; border:1px solid #E8E2D9; border-radius:12px;}
+    .filter-bar label{font-family:'JetBrains Mono'; font-size:11px; font-weight:700; color:#1A3C34;}
+    .filter-select{padding:10px 14px; border-radius:8px; border:1.5px solid #D9D2C7; font-family:'Inter'; font-size:13px; font-weight:600; background:#fff; min-width:200px;}
+    .filter-input{padding:10px 14px; border-radius:8px; border:1.5px solid #D9D2C7; font-family:'JetBrains Mono'; font-size:12px; background:#fff; min-width:220px;}
+    .filter-count{font-family:'JetBrains Mono'; font-size:11px; color:#8B8B8B; background:#F5F1EB; padding:6px 12px; border-radius:20px; margin-left:auto;}
+    .price-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(310px,1fr)); gap:18px; margin-top:20px;}
+    .p-item{border:1px solid #E8E2D9; border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:10px; background:#fff; transition:0.2s;}
+    .p-item h3{margin:0; font-family:'Fraunces'; font-size:18px;}
+    .badge{display:inline-block; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; font-family:'JetBrains Mono';}
+    .badge-kg{background:#1A3C34; color:#fff;} .badge-pcs{background:#E8A87C; color:#1A3C34;} .badge-bale{background:#D9D2C7; color:#1A3C34;} .badge-bag{background:#B5C99A; color:#1A3C34;}
+    .badge-source{display:inline-block; padding:4px 10px; border-radius:20px; font-size:10px; font-weight:700; font-family:'JetBrains Mono'; margin-left:6px; background:#FFFCF5; border:1px solid #E8E2D9;}
+    .badge-source.organic{background:#E8F5E9; border-color:#A5D6A7;} .badge-source.plastic{background:#E3F2FD; border-color:#90CAF9;} .badge-source.paper{background:#FFF8E1; border-color:#FFE082;} .badge-source.metal{background:#ECEFF1; border-color:#B0BEC5;} .badge-source.glass{background:#E0F2F1; border-color:#80CBC4;} .badge-source.ewaste{background:#F3E5F5; border-color:#CE93D8;} .badge-source.textile{background:#FFF3E0; border-color:#FFCC80;}
+    .price-row{display:flex; gap:8px; flex-wrap:wrap;}
+    .price-show{font-family:'JetBrains Mono'; font-size:13px; font-weight:700; background:#F5F1EB; border:1px solid #E8E2D9; padding:6px 10px; border-radius:20px;}
+    .price-show.primary{background:#1A3C34; color:#fff;}
+    .p-actions{display:flex; gap:8px; margin-top:6px;}
+    .btn-edit{flex:1; border:1.5px solid #1A3C34; background:#fff; color:#1A3C34; padding:8px 12px; border-radius:8px; font-weight:600; cursor:pointer;}
+    .btn-del{border:1.5px solid #C94C4C; background:#fff; color:#C94C4C; padding:8px 12px; border-radius:8px; font-weight:600; cursor:pointer;}
+    .modal{display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:9999; align-items:center; justify-content:center;}
+    .modal.active{display:flex;}
+    .modal-box{background:#fff; border-radius:14px; padding:22px; width:460px; max-width:90%;}
+    .modal-box h2{font-family:'Fraunces'; margin:0 0 12px;}
+    .modal-actions{display:flex; gap:8px; margin-top:14px;}
+    .btn-primary{flex:1; background:#1A3C34; color:#fff; border:none; padding:11px; border-radius:8px; font-weight:700; cursor:pointer;}
+    .btn-cancel{flex:1; background:#F5F1EB; border:none; padding:11px; border-radius:8px; cursor:pointer;}
+    .flash-popup{position:fixed; top:18px; right:18px; background:#1A3C34; color:#fff; padding:12px 18px; border-radius:10px; z-index:10000; animation: fadeOut 0.5s forwards 3s;}
+    @keyframes fadeOut { to { opacity:0; transform:translateY(-10px); pointer-events:none; } }
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon">EC</div><span>EcoCycle Admin</span></div>
+    <nav class="sidebar-nav">
+      <p class="nav-section">OVERVIEW</p>
+      <a href="{{ url_for('admin_dashboard') }}" class="nav-item">Dashboard</a>
+      <p class="nav-section">CONFIGURATION</p>
+      <a href="{{ url_for('recycled_products') }}" class="nav-item active">Recycled Products</a>
+      <a href="{{ url_for('wastes_rewards') }}" class="nav-item">Waste Categories</a>
+            <p class="nav-section">REVENUE</p>
+
+      <a href="{{ url_for('admin_viewinventory') }}" class="nav-item">Inventory</a>
+      <a href="{{ url_for('admin_viewsales') }}" class="nav-item">Sales Log</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="main-header">
+      <div><h1 class="page-title">Recycled Products - Admin</h1><p class="page-subtitle">Add recycled items — disposal excluded, price changes with unit</p></div>
+    </header>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}{% for msg in messages %}<div class="flash-popup">✅ {{ msg }}</div>{% endfor %}{% endif %}
+    {% endwith %}
+
+    <!-- ADD -->
+    <section class="add-card">
+      <h2>+ Add New Recycled Item</h2>
+      <form method="POST" action="{{ url_for('add_recycled_product') }}">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>RECYCLED ITEM NAME *</label>
+            <input type="text" name="recycled_name" minlength="2" placeholder="e.g., Plastic Granules" required>
+          </div>
+          <div class="form-group">
+            <label>SOURCE WASTE CATEGORY * (No Disposal)</label>
+            <select name="category_id" required>
+              <option value="" selected disabled>-- Select Waste Category --</option>
+              {% for c in cats %}
+                {% if c['is_disposal'] == 0 %}
+                <option value="{{ c['category_id'] }}">{{ c['category_name'] }}</option>
+                {% endif %}
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Unit *</label>
+            <select name="unit" id="unitSelect" required onchange="togglePriceFields()">
+              <option value="" selected disabled>-- Choose Unit --</option>
+              <option value="kg">KG - Granules/Scrap</option>
+              <option value="bale">BALE - Paper/Textile Bales</option>
+              <option value="bag">BAG - Compost Bags</option>
+              <option value="pcs">PCS - E-Waste Components</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label id="priceLabel">Resale Price (₹) *</label>
+            <input type="number" step="0.01" min="0" name="resale_price_per_kg" id="priceInput" placeholder="Select unit first" required>
+            <small id="priceHint">Choose unit to set price</small>
+          </div>
+        </div>
+        <button type="submit" class="btn-save">Add Recycled Item</button>
+      </form>
+    </section>
+
+    <!-- FILTER BAR -->
+    <div class="filter-bar">
+      <label>🔍 FILTER:</label>
+      <select id="sourceFilter" class="filter-select" onchange="filterItems()">
+        <option value="all">All Source Waste ({{ recycled_items|length }})</option>
+        {% for c in cats %}
+          {% if c['is_disposal'] == 0 %}
+          <option value="{{ c['category_name']|lower }}">{{ c['category_name'] }}</option>
+          {% endif %}
+        {% endfor %}
+      </select>
+      <select id="unitFilter" class="filter-select" style="min-width:140px;" onchange="filterItems()">
+        <option value="all">All Units</option>
+        <option value="kg">KG</option>
+        <option value="bale">BALE</option>
+        <option value="bag">BAG</option>
+        <option value="pcs">PCS</option>
+      </select>
+      <input type="text" id="searchInput" class="filter-input" placeholder="Search recycled item..." onkeyup="filterItems()">
+      <span id="filterCount" class="filter-count">{{ recycled_items|length }} items</span>
+      <button onclick="clearFilter()" style="padding:8px 14px; border-radius:8px; border:1px solid #D9D2C7; background:#fff; cursor:pointer; font-family:'JetBrains Mono'; font-size:11px;">Clear</button>
+    </div>
+
+    <!-- LIST -->
+    <section class="price-card">
+      <h2 style="font-family:'Fraunces';">Existing Recycled Items (<span id="totalCount">{{ recycled_items|length }}</span>)</h2>
+      <div class="price-grid" id="priceGrid">
+        {% for r in recycled_items %}
+        {% set unit_val = (r['unit'] or 'kg') %}
+        {% set unit_low = unit_val|lower %}
+        {% set cat_low = r['category_name']|lower %}
+        {% if 'organic' in cat_low %}{% set src_class='organic' %}
+        {% elif 'plastic' in cat_low %}{% set src_class='plastic' %}
+        {% elif 'paper' in cat_low %}{% set src_class='paper' %}
+        {% elif 'metal' in cat_low %}{% set src_class='metal' %}
+        {% elif 'glass' in cat_low %}{% set src_class='glass' %}
+        {% elif 'e-waste' in cat_low or 'ewaste' in cat_low %}{% set src_class='ewaste' %}
+        {% elif 'textile' in cat_low or 'cloth' in cat_low %}{% set src_class='textile' %}
+        {% else %}{% set src_class='' %}{% endif %}
+        <div class="p-item" data-category="{{ r['category_name']|lower }}" data-unit="{{ unit_low }}" data-name="{{ r['recycled_name']|lower }}">
+          <h3>{{ r['recycled_name'] }}</h3>
+          <small style="font-family:'JetBrains Mono'; color:#8B8B8B;">Source: {{ r['category_name'] }} <span class="badge-source {{ src_class }}">{{ r['category_name'] }}</span></small>
+          <div>
+            {% if unit_low=='kg' %}<span class="badge badge-kg">KG</span>
+            {% elif unit_low=='pcs' %}<span class="badge badge-pcs">PCS</span>
+            {% elif unit_low=='bale' %}<span class="badge badge-bale">BALE</span>
+            {% elif unit_low=='bag' %}<span class="badge badge-bag">BAG</span>
+            {% else %}<span class="badge badge-kg">{{ unit_val|upper }}</span>{% endif %}
+          </div>
+          <div class="price-row">
+            <span class="price-show primary">₹ {{ r['resale_price_per_kg'] }} /{{ unit_val }}</span>
+            <span class="price-show">Stock: {{ r['stock_kg'] }} {{ unit_val }}</span>
+          </div>
+          <div class="p-actions">
+            <button class="btn-edit" 
+              data-id="{{ r['recycled_id'] }}"
+              data-name="{{ r['recycled_name']|e }}"
+              data-catid="{{ r['category_id'] }}"
+              data-unit="{{ unit_val }}"
+              data-price="{{ r['resale_price_per_kg'] }}"
+              onclick="openEdit(this)">✏ Edit</button>
+            <form method="POST" action="{{ url_for('delete_recycled_product', rid=r['recycled_id']) }}" onsubmit="return confirm('Delete {{ r['recycled_name']|e }}?')">
+              <button type="submit" class="btn-del">Delete</button>
+            </form>
+          </div>
+        </div>
+        {% else %}<p id="noItems">No items yet.</p>{% endfor %}
+      </div>
+      <p id="noResults" style="display:none; text-align:center; padding:30px; color:#8B8B8B; font-family:'JetBrains Mono';">No items found for this filter.</p>
+    </section>
+  </main>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal" id="editModal">
+  <div class="modal-box">
+    <h2 id="mTitle">Edit Recycled Item</h2>
+    <form method="POST" id="editForm">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Item Name *</label>
+          <input type="text" name="recycled_name" id="mName" minlength="2" required>
+        </div>
+        <div class="form-group">
+          <label>Source Category *</label>
+          <select name="category_id" id="mCategory" required>
+            {% for c in cats %}
+              {% if c['is_disposal'] == 0 %}
+              <option value="{{ c['category_id'] }}">{{ c['category_name'] }}</option>
+              {% endif %}
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Unit *</label>
+          <select name="unit" id="mUnit" required onchange="toggleModalPrice()">
+            <option value="kg">KG</option>
+            <option value="bale">BALE</option>
+            <option value="bag">BAG</option>
+            <option value="pcs">PCS</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label id="mPriceLabel">Price *</label>
+          <input type="number" step="0.01" min="0" name="resale_price_per_kg" id="mPrice" required>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function togglePriceFields(){
+  const unit = document.getElementById('unitSelect').value;
+  const label = document.getElementById('priceLabel');
+  const input = document.getElementById('priceInput');
+  const hint = document.getElementById('priceHint');
+  if(unit==='kg'){ label.innerText='Resale Price per KG (₹) *'; input.placeholder='e.g., 35 per kg'; hint.innerText='Plastic granules 35, Iron 35'; }
+  else if(unit==='bale'){ label.innerText='Resale Price per BALE (₹) *'; input.placeholder='e.g., 900 per bale'; hint.innerText='Paper bale 900, Textile bale 500'; }
+  else if(unit==='bag'){ label.innerText='Resale Price per BAG (₹) *'; input.placeholder='e.g., 75 per bag'; hint.innerText='Compost bag 75'; }
+  else if(unit==='pcs'){ label.innerText='Resale Price per PCS (₹) *'; input.placeholder='e.g., 200 per pcs'; hint.innerText='E-waste board 200 per pcs'; }
+}
+function toggleModalPrice(){
+  const unit = document.getElementById('mUnit').value;
+  const label = document.getElementById('mPriceLabel');
+  if(unit==='kg') label.innerText='Price per KG (₹) *';
+  else if(unit==='bale') label.innerText='Price per BALE (₹) *';
+  else if(unit==='bag') label.innerText='Price per BAG (₹) *';
+  else if(unit==='pcs') label.innerText='Price per PCS (₹) *';
+}
+function openEdit(btn){
+  const id = btn.dataset.id;
+  const name = btn.dataset.name;
+  const catId = btn.dataset.catid;
+  const unit = btn.dataset.unit;
+  const price = btn.dataset.price;
+  document.getElementById('mTitle').innerText='Edit - '+name;
+  document.getElementById('mName').value=name;
+  document.getElementById('mCategory').value=catId;
+  document.getElementById('mUnit').value=unit||'kg';
+  document.getElementById('mPrice').value=price;
+  document.getElementById('editForm').action='/admin/recycled_products/edit/'+id;
+  document.getElementById('editModal').classList.add('active');
+  toggleModalPrice();
+}
+function closeModal(){ document.getElementById('editModal').classList.remove('active'); }
+document.getElementById('editModal').addEventListener('click', e=>{ if(e.target.id==='editModal') closeModal(); });
+
+function filterItems(){
+  const source = document.getElementById('sourceFilter').value.toLowerCase();
+  const unit = document.getElementById('unitFilter').value.toLowerCase();
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const items = document.querySelectorAll('.p-item');
+  let visible = 0;
+  items.forEach(item=>{
+    const cat = item.getAttribute('data-category');
+    const u = item.getAttribute('data-unit');
+    const name = item.getAttribute('data-name');
+    const matchSource = source==='all' || cat.includes(source);
+    const matchUnit = unit==='all' || u===unit;
+    const matchSearch = name.includes(search) || cat.includes(search);
+    if(matchSource && matchUnit && matchSearch){ item.style.display='flex'; visible++; } else { item.style.display='none'; }
+  });
+  document.getElementById('filterCount').innerText = visible + ' items';
+  document.getElementById('totalCount').innerText = visible;
+  document.getElementById('noResults').style.display = visible===0 ? 'block' : 'none';
+}
+function clearFilter(){
+  document.getElementById('sourceFilter').value='all';
+  document.getElementById('unitFilter').value='all';
+  document.getElementById('searchInput').value='';
+  filterItems();
+}
+setTimeout(()=>{ document.querySelectorAll('.flash-popup').forEach(e=>e.remove()) }, 4000);
+</script>
+</body>
+</html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Staff Profile - EcoCycle</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600&family=Inter:wght@400;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F4F5F1;--panel:#FFFFFF;--panel-raised:#F8F9F6;--line:#E4E7E0;--text:#1E201D;--dim:#6B716A;--faint:#9AA096;--amber:#C17F1A;--amber-dim:#FEF3E0;--red:#B94E33;--red-dim:#FDECE8;--glass:#5A8A3A;--glass-dim:#EAF2E3;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'Inter';}
+.wrap{max-width:1320px;margin:0 auto;padding:22px 26px 60px;}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;background:var(--panel);border-radius:8px;padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);border:1px solid var(--line);flex-wrap:wrap;gap:16px;}
+.brand{display:flex;align-items:center;gap:14px;font-family:'Oswald';font-size:22px;letter-spacing:.5px;color:var(--text);font-weight:700;}
+.mark{width:42px;height:42px;border:2px solid var(--amber);border-radius:3px;display:flex;align-items:center;justify-content:center;color:var(--amber);font-weight:700;background:var(--amber-dim);font-size:15px;}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:22px;margin-top:16px;box-shadow:0 1px 4px rgba(0,0,0,0.04);}
+.avatar{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--amber),#E9C27A);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Oswald';font-size:30px;font-weight:700;border:2px solid var(--amber);}
+.row{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid rgba(0,0,0,0.05);font-size:13.5px;align-items:center;}
+.k{color:var(--dim);}.v{font-family:'JetBrains Mono';font-weight:600;color:var(--text);}
+.btn{padding:11px 20px;border-radius:6px;text-decoration:none;font-weight:700;font-size:13px;display:inline-block;cursor:pointer;border:none;}
+.btn-amber{background:var(--amber);color:#fff;border:1px solid var(--amber);}
+.btn-amber:hover{filter:brightness(0.95);}
+.btn-red{background:var(--red-dim);border:1.5px solid var(--red);color:var(--red);}
+.btn-red:hover{background:var(--red);color:#fff;}
+.btn-dark{background:var(--panel-raised);border:1px solid var(--line);color:var(--text);}
+.edit-input{width:55%;padding:8px 10px;border:1.5px solid var(--amber);border-radius:6px;font-family:'JetBrains Mono';font-size:13px;display:none;}
+</style>
+</head><body>
+<div class="wrap">
+<div class="top">
+  <div class="brand"><div class="mark">EC</div> RECYCLING CENTER — STAFF PROFILE</div>
+  <div style="display:flex; align-items:center; gap:16px;">
+    <div style="text-align:right;">
+      <div style="font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:1px;">Logged in</div>
+      <div style="font-family:'JetBrains Mono';font-size:14px;margin-top:3px;">{{ staff.full_name }}</div>
+      <div style="display:flex; gap:6px; margin-top:6px; justify-content:flex-end; flex-wrap:wrap;">
+        <a href="/recycling_dashboard" style="text-decoration:none; background:#1A3C34; color:#fff; font-weight:700; border-radius:20px; padding:6px 14px; font-family:'JetBrains Mono'; font-size:11px;">🏠 Dashboard</a>
+        <a href="/staff/totalwastes" style="text-decoration:none; background:#1A3C34; color:#fff; font-weight:700; border-radius:20px; padding:6px 14px; font-family:'JetBrains Mono'; font-size:11px;">📦 Collection History</a>
+        <a href="/staff/recycling_log" style="text-decoration:none; background:#5A8A3A; color:#fff; font-weight:700; border-radius:20px; padding:6px 14px; font-family:'JetBrains Mono'; font-size:11px;">♻ Recycling Log</a>
+        <a href="/staff/sales" style="text-decoration:none; background:#C17F1A; color:#fff; font-weight:700; border-radius:20px; padding:6px 14px; font-family:'JetBrains Mono'; font-size:11px;">💰 Sales Log</a>
+        <a href="/all_disposals" style="text-decoration:none; background:#B94E33; color:#fff; font-weight:700; border-radius:20px; padding:6px 14px; font-family:'JetBrains Mono'; font-size:11px;">🗑 Disposal Log</a>
+      </div>
+    </div>
+    <a href="{{ url_for('staff_profile') }}" style="width:44px;height:44px;border-radius:50%;background:var(--panel-raised);border:2px solid var(--amber);display:grid;place-items:center;text-decoration:none;color:var(--amber);font-size:20px; box-shadow:0 0 0 2px #1E201D, 0 2px 8px rgba(0,0,0,0.3);" title="Staff Profile">👤</a>
+  </div>
+</div>
+
+<div class="card" style="display:flex;gap:18px;align-items:center;">
+  <div class="avatar">{{ staff.full_name[0]|upper }}</div>
+  <div>
+    <h2 style="margin:0;font-family:'Oswald';letter-spacing:.5px;">{{ staff.full_name }}</h2>
+    <div style="color:var(--dim);font-family:'JetBrains Mono';font-size:12px;margin-top:4px;">ID #{{ staff.staff_id }} · {{ staff.email }}</div>
+    <div style="margin-top:8px;"><span style="background:var(--amber-dim);color:var(--amber);font-family:'JetBrains Mono';font-size:10px;padding:4px 8px;border-radius:12px;border:1px solid #E9C27A;">● ACTIVE SHIFT</span></div>
+  </div>
+</div>
+
+<div class="card">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+<h3 style="margin:0;font-family:'Oswald';font-size:13px;letter-spacing:1.2px;">PROFILE DETAILS</h3>
+<button id="editBtn" onclick="toggleEdit()" class="btn btn-dark" style="font-size:11px;padding:6px 12px;">✏️ Edit</button>
+</div>
+
+<div class="row"><span class="k">Full Name</span><span class="v" id="view_name">{{ staff.full_name }}</span><input class="edit-input" id="edit_name" value="{{ staff.full_name }}"></div>
+<div class="row"><span class="k">Email</span><span class="v" id="view_email">{{ staff.email }}</span><input class="edit-input" id="edit_email" value="{{ staff.email }}"></div>
+<div class="row"><span class="k">Phone</span><span class="v" id="view_phone">{{ staff.phone }}</span><input class="edit-input" id="edit_phone" value="{{ staff.phone }}"></div>
+<div class="row"><span class="k">Street</span><span class="v" id="view_street">{{ staff.street }}</span><input class="edit-input" id="edit_street" value="{{ staff.street }}"></div>
+<div class="row"><span class="k">City</span><span class="v" id="view_city">{{ staff.city }}</span><input class="edit-input" id="edit_city" value="{{ staff.city }}"></div>
+<div class="row"><span class="k">District</span><span class="v" id="view_district">{{ staff.district }}</span><input class="edit-input" id="edit_district" value="{{ staff.district }}"></div>
+<div class="row"><span class="k">Pincode</span><span class="v" id="view_pincode">{{ staff.pincode }}</span><input class="edit-input" id="edit_pincode" value="{{ staff.pincode }}"></div>
+<div class="row"><span class="k">Qualification</span><span class="v" id="view_qual">{{ staff.qualification or 'Not set' }}</span><input class="edit-input" id="edit_qual" value="{{ staff.qualification }}"></div>
+<div class="row"><span class="k">Member Since</span><span class="v">{{ staff.created_at.strftime('%d %b %Y') if staff.created_at else '—' }}</span></div>
+
+<div id="saveRow" style="display:none;margin-top:14px;gap:8px;">
+<button onclick="saveProfile()" class="btn btn-amber">💾 Save Changes</button>
+<button onclick="toggleEdit()" class="btn btn-dark">Cancel</button>
+</div>
+<div id="profileMsg" style="margin-top:10px;font-size:13px;font-weight:600;"></div>
+</div>
+
+<div class="card" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;">
+<div style="background:var(--panel-raised);border:1px solid var(--line);border-radius:6px;padding:14px;text-align:center;"><div style="font-family:'JetBrains Mono';font-size:22px;font-weight:700;color:var(--amber);">{{ total_sales }}</div><div style="font-size:11px;color:var(--dim);margin-top:4px;">MY TRANSACTIONS</div></div>
+<div style="background:var(--panel-raised);border:1px solid var(--line);border-radius:6px;padding:14px;text-align:center;"><div style="font-family:'JetBrains Mono';font-size:22px;font-weight:700;">{{ sold_kg or 0 }} kg</div><div style="font-size:11px;color:var(--dim);margin-top:4px;">MY SOLD</div></div>
+<div style="background:var(--glass-dim);border:1px solid #B9D0A8;border-radius:6px;padding:14px;text-align:center;"><div style="font-family:'JetBrains Mono';font-size:22px;font-weight:700;color:var(--glass);">₹{{ revenue or 0 }}</div><div style="font-size:11px;color:var(--dim);margin-top:4px;">MY REVENUE</div></div>
+<div style="background:var(--amber-dim);border-radius:6px;padding:14px;text-align:center;border:1px solid #E9C27A;"><div style="font-family:'JetBrains Mono';font-size:22px;font-weight:700;color:var(--amber);">₹{{ total_revenue_all or 0 }}</div><div style="font-size:11px;color:var(--dim);margin-top:4px;">TOTAL (ALL STAFFS)</div></div>
+</div>
+
+<div style="margin-top:20px;display:flex;gap:10px;">
+<a href="{{ url_for('recycling_dashboard') }}" class="btn btn-amber">Go to Dashboard →</a>
+<a href="{{ url_for('logout') }}" class="btn btn-red">Logout</a>
+</div>
+
+<div class="card" style="margin-top:16px;">
+  <h3 style="margin:0 0 16px;font-family:'Oswald';font-size:13px;letter-spacing:1.2px;">🔑 CHANGE PASSWORD</h3>
+  <div style="display:grid;gap:12px;">
+    <div>
+      <label style="font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:5px;">Current Password</label>
+      <div style="position:relative;">
+        <input type="password" id="oldPw" placeholder="Enter current password" style="width:100%;padding:10px 40px 10px 12px;border:1.5px solid var(--line);border-radius:6px;font-family:'Inter';font-size:13px;background:var(--panel-raised);">
+        <span onclick="toggleEye('oldPw',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:15px;">👁</span>
+      </div>
+    </div>
+    <div>
+      <label style="font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:5px;">New Password</label>
+      <div style="position:relative;">
+        <input type="password" id="newPw" placeholder="Min. 6 characters" style="width:100%;padding:10px 40px 10px 12px;border:1.5px solid var(--line);border-radius:6px;font-family:'Inter';font-size:13px;background:var(--panel-raised);">
+        <span onclick="toggleEye('newPw',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:15px;">👁</span>
+      </div>
+    </div>
+    <div>
+      <label style="font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:5px;">Confirm New Password</label>
+      <div style="position:relative;">
+        <input type="password" id="confPw" placeholder="Repeat new password" style="width:100%;padding:10px 40px 10px 12px;border:1.5px solid var(--line);border-radius:6px;font-family:'Inter';font-size:13px;background:var(--panel-raised);">
+        <span onclick="toggleEye('confPw',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:15px;">👁</span>
+      </div>
+    </div>
+  </div>
+  <button onclick="changePassword()" style="margin-top:14px;padding:11px 24px;background:var(--amber);color:#fff;border:none;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;font-family:'Inter';">Change Password</button>
+  <div id="pwMsg" style="margin-top:10px;font-size:13px;font-weight:600;"></div>
+</div>
+
+</div>
+<script>
+let isEdit=false;
+function toggleEdit(){
+  isEdit=!isEdit;
+  document.querySelectorAll('.edit-input').forEach(i=>i.style.display=isEdit?'block':'none');
+  document.querySelectorAll('.v').forEach(v=>{ if(v.id.startsWith('view_')) v.style.display=isEdit?'none':'block'; });
+  document.getElementById('saveRow').style.display=isEdit?'flex':'none';
+  document.getElementById('editBtn').textContent=isEdit?'✖ Close':'✏️ Edit';
+}
+async function saveProfile(){
+  const payload={
+    full_name: document.getElementById('edit_name').value.trim(),
+    email: document.getElementById('edit_email').value.trim(),
+    phone: document.getElementById('edit_phone').value.trim(),
+    street: document.getElementById('edit_street').value.trim(),
+    city: document.getElementById('edit_city').value.trim(),
+    district: document.getElementById('edit_district').value.trim(),
+    pincode: document.getElementById('edit_pincode').value.trim(),
+    qualification: document.getElementById('edit_qual').value.trim()
+  };
+  const msg=document.getElementById('profileMsg');
+  if(payload.full_name.length<2){ msg.style.color='#B94E33'; msg.textContent='⚠ Name min 2 chars'; return; }
+  if(!/^[6-9][0-9]{9}$/.test(payload.phone)){ msg.style.color='#B94E33'; msg.textContent='⚠ Invalid phone'; return; }
+  if(!/^[\w\.-]+@[\w\.-]+\.\w+$/.test(payload.email)){ msg.style.color='#B94E33'; msg.textContent='⚠ Invalid email'; return; }
+  if(!/^[0-9]{6}$/.test(payload.pincode)){ msg.style.color='#B94E33'; msg.textContent='⚠ Invalid pincode'; return; }
+
+  const res=await fetch('/api/staff/update-profile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  const data=await res.json();
+  msg.style.color=data.success?'#5A8A3A':'#B94E33';
+  msg.textContent=(data.success?'✅ ':'❌ ')+data.message;
+  if(data.success){ setTimeout(()=>location.reload(),1000); }
+}
+
+function toggleEye(id, el){ const inp=document.getElementById(id); inp.type=inp.type==='password'?'text':'password'; el.textContent=inp.type==='password'?'👁':'🙈'; }
+async function changePassword(){
+  const old_password = document.getElementById('oldPw').value;
+  const new_password = document.getElementById('newPw').value.trim();
+  const confirm_password = document.getElementById('confPw').value.trim();
+  const msg = document.getElementById('pwMsg');
+  if(!old_password){ msg.style.color='#B94E33'; msg.textContent='⚠ Enter your current password.'; return; }
+  if(new_password.length < 6){ msg.style.color='#B94E33'; msg.textContent='⚠ New password must be at least 6 characters.'; return; }
+  if(new_password!== confirm_password){ msg.style.color='#B94E33'; msg.textContent='⚠ New passwords do not match.'; return; }
+  const res = await fetch('/api/staff/change-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({old_password,new_password,confirm_password})});
+  const data = await res.json();
+  msg.style.color = data.success? '#5A8A3A' : '#B94E33';
+  msg.textContent = (data.success? '✅ ' : '❌ ') + data.message;
+  if(data.success){ document.getElementById('oldPw').value=''; document.getElementById('newPw').value=''; document.getElementById('confPw').value=''; }
+}
+async function saveProfile(){
+  const payload={
+    full_name: document.getElementById('edit_name').value.trim(),
+    email: document.getElementById('edit_email').value.trim(),
+    phone: document.getElementById('edit_phone').value.trim(),
+    street: document.getElementById('edit_street').value.trim(),
+    city: document.getElementById('edit_city').value.trim(),
+    district: document.getElementById('edit_district').value.trim(),
+    pincode: document.getElementById('edit_pincode').value.trim(),
+    qualification: document.getElementById('edit_qual').value.trim()
+  };
+  const msg=document.getElementById('profileMsg');
+  msg.textContent='⏳ Saving...';
+  msg.style.color='#6B716A';
+  
+  try{
+    const res=await fetch('/api/staff/update-profile',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    });
+    const data=await res.json();
+    msg.style.color=data.success?'#5A8A3A':'#B94E33';
+    msg.textContent=(data.success?'✅ ':'❌ ')+data.message;
+    if(data.success){ 
+      setTimeout(()=>location.reload(),1200); 
+    }
+  }catch(err){
+    msg.style.color='#B94E33';
+    msg.textContent='❌ Network error: '+err.message;
+  }
+}
+</script>
+</body></html>

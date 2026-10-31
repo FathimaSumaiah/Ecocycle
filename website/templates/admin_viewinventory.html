@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EcoCycle - Inventory</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pending_households.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/add_worker.css') }}" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box}
+    .inventory-stats{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px;}
+    .stat-box{background:#fff; border:1px solid #E8E2D9; border-radius:14px; padding:18px;}
+    .stat-box .icon{font-size:20px; margin-bottom:8px; width:40px; height:40px; display:grid; place-items:center; border-radius:10px;}
+    .stat-box.green .icon{background:#E8F5E9;} .stat-box.blue .icon{background:#E3F2FD;} .stat-box.yellow .icon{background:#FFF8E1;} .stat-box.dark{background:#1A3C34; color:#fff;}
+    .stat-box.dark .icon{background:#2A6B5E; color:#fff;}
+    .stat-box .value{font-family:'Fraunces'; font-size:24px; font-weight:700; display:block;}
+    .stat-box .label{font-family:'JetBrains Mono'; font-size:11px; color:#8B8B8B; margin-top:4px; display:block;}
+    .stat-box.dark .label{color:#B5C99A;}
+
+    .filter-card{background:#FFFCF5; border:1px solid #E8E2D9; border-radius:14px; padding:16px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:18px;}
+    .filter-card select, .filter-card input{padding:10px 14px; border-radius:8px; border:1.5px solid #D9D2C7; font-family:'Inter'; font-size:13px; background:#fff; min-width:180px;}
+    .filter-card input{min-width:240px; font-family:'JetBrains Mono'; font-size:12px;}
+    .btn-filter{background:#1A3C34; color:#fff; border:none; padding:10px 18px; border-radius:8px; font-weight:700; cursor:pointer;}
+
+    .inventory-card{background:#fff; border:1px solid #E8E2D9; border-radius:16px; padding:22px; overflow:hidden;}
+    .inventory-header{display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:12px;}
+    .inventory-header h2{font-family:'Fraunces'; font-size:20px; margin:0;}
+    .count-badge{background:#1A3C34; color:#fff; padding:6px 14px; border-radius:20px; font-family:'JetBrains Mono'; font-size:11px;}
+
+    .table-wrap{overflow:auto; border:1px solid #E8E2D9; border-radius:12px;}
+    table{width:100%; border-collapse:collapse; min-width:860px;}
+    thead{background:#F5F1EB;}
+    th{font-family:'JetBrains Mono'; font-size:11px; text-align:left; padding:12px 16px; color:#1A3C34; font-weight:700; text-transform:uppercase; letter-spacing:0.04em;}
+    td{padding:14px 16px; font-size:13px; border-top:1px solid #F0EDE1; vertical-align:middle;}
+    td .name{font-weight:600; font-family:'Inter';}
+    td .sub{font-family:'JetBrains Mono'; font-size:11px; color:#8B8B8B; display:block; margin-top:2px;}
+
+    .badge{padding:4px 10px; border-radius:20px; font-size:10px; font-weight:700; font-family:'JetBrains Mono'; display:inline-block;}
+    .badge-kg{background:#1A3C34; color:#fff;} .badge-bale{background:#D9D2C7; color:#1A3C34;} .badge-bag{background:#B5C99A; color:#1A3C34;} .badge-pcs{background:#E8A87C; color:#1A3C34;}
+    .badge-source{border:1px solid #E8E2D9; background:#FFFCF5;}
+    .badge-source.organic{background:#E8F5E9;} .badge-source.plastic{background:#E3F2FD;} .badge-source.paper{background:#FFF8E1;} .badge-source.metal{background:#ECEFF1;} .badge-source.ewaste{background:#F3E5F5;} .badge-source.textile{background:#FFF3E0;} .badge-source.glass{background:#E0F2F1;}
+
+    .stock-bar{width:100px; height:6px; background:#F0EDE1; border-radius:10px; overflow:hidden; display:inline-block; vertical-align:middle; margin-right:8px;}
+    .stock-fill{height:100%; border-radius:10px;}
+    .stock-fill.high{background:#2A6B5E;} .stock-fill.mid{background:#C67F2A;} .stock-fill.low{background:#C94C4C;}
+    .stock-text{font-family:'JetBrains Mono'; font-size:11px; font-weight:700;}
+
+    .profit{font-family:'JetBrains Mono'; font-weight:700; color:#2A6B5E;}
+
+    .card-grid{display:none; grid-template-columns:repeat(auto-fill, minmax(300px,1fr)); gap:16px; margin-top:16px;}
+    .inv-item{border:1px solid #E8E2D9; border-radius:14px; padding:16px; background:#fff; display:flex; flex-direction:column; gap:10px;}
+    .inv-item h3{font-family:'Fraunces'; margin:0; font-size:16px;}
+
+    .info-note{background:#EAF2E3; border:1px solid #B9D0A8; border-radius:8px; padding:10px 14px; font-family:'JetBrains Mono'; font-size:11px; color:#2A6B5E; margin-bottom:14px;}
+
+    @media(max-width:1100px){.inventory-stats{grid-template-columns:repeat(2,1fr);} table{min-width:700px;}}
+    @media(max-width:700px){.inventory-stats{grid-template-columns:1fr;} .table-wrap{display:none;} .card-grid{display:grid;}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon">EC</div><span>EcoCycle Admin</span></div>
+    <nav class="sidebar-nav">
+      <p class="nav-section">OVERVIEW</p>
+      <a href="{{ url_for('admin_dashboard') }}" class="nav-item">Dashboard</a>
+      <p class="nav-section">CONFIGURATION</p>
+      <a href="{{ url_for('recycled_products') }}" class="nav-item">Recycled Products</a>
+      <a href="{{ url_for('wastes_rewards') }}" class="nav-item">Waste Categories</a>
+      <p class="nav-section">REVENUE</p>
+      <a href="{{ url_for('admin_viewinventory') }}" class="nav-item active">Inventory</a>
+      <a href="{{ url_for('admin_viewsales') }}" class="nav-item">Sales Log</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="main-header">
+      <div>
+        <h1 class="page-title">Inventory — Recycled Products Stock</h1>
+        <p class="page-subtitle">Total stock added by staff • sold quantities • remaining stock view</p>
+      </div>
+      <a href="{{ url_for('recycled_products') }}" style="background:#1A3C34; color:#fff; padding:10px 18px; border-radius:10px; text-decoration:none; font-weight:700; font-size:13px;">+ Add Product</a>
+    </header>
+
+    <!-- STATS -->
+    <section class="inventory-stats">
+      <div class="stat-box green"><div class="icon">📦</div><span class="value">{{ total_items or 0 }}</span><span class="label">Total Recycled Products</span></div>
+      <div class="stat-box blue"><div class="icon">♻️</div><span class="value">{{ total_stock or 0 }}</span><span class="label">Total Remaining Stock</span></div>
+      <div class="stat-box yellow"><div class="icon">💰</div><span class="value">₹ {{ total_value or 0 }}</span><span class="label">Remaining Stock Value</span></div>
+      <div class="stat-box dark"><div class="icon">📉</div><span class="value">{{ low_stock_count or 0 }}</span><span class="label">Low Stock Items (&lt;10)</span></div>
+    </section>
+
+    <!-- INFO NOTE -->
+    <div class="info-note">
+      ℹ️ <b>Stock In</b> = total quantity ever added to inventory by staff &nbsp;|&nbsp; <b>Sold</b> = total sold via resale transactions &nbsp;|&nbsp; <b>Remaining</b> = current available stock
+    </div>
+
+    <!-- FILTERS -->
+    <section class="filter-card">
+      <select id="catFilter" onchange="filterTable()">
+        <option value="all">All Source Waste</option>
+        {% for c in categories %}
+          {% if c['is_disposal']==0 %}<option value="{{ c['category_name']|lower }}">{{ c['category_name'] }}</option>{% endif %}
+        {% endfor %}
+      </select>
+      <select id="unitFilter" onchange="filterTable()">
+        <option value="all">All Units</option>
+        <option value="kg">KG</option>
+        <option value="bale">BALE</option>
+        <option value="bag">BAG</option>
+        <option value="pcs">PCS</option>
+      </select>
+      <select id="stockFilter" onchange="filterTable()">
+        <option value="all">All Stock</option>
+        <option value="high">High Stock (&gt;50)</option>
+        <option value="mid">Medium (10–50)</option>
+        <option value="low">Low Stock (&lt;10)</option>
+        <option value="out">Out of Stock</option>
+      </select>
+      <input type="text" id="searchBox" placeholder="Search item name..." onkeyup="filterTable()">
+      <button class="btn-filter" onclick="clearFilters()">Clear</button>
+      <span style="margin-left:auto; font-family:'JetBrains Mono'; font-size:11px; color:#8B8B8B;" id="countLabel">{{ inventory|length }} items</span>
+    </section>
+
+    <!-- TABLE -->
+    <section class="inventory-card">
+      <div class="inventory-header">
+        <h2>Current Inventory</h2>
+        <span class="count-badge" id="visibleCount">{{ inventory|length }} items</span>
+      </div>
+
+      <div class="table-wrap">
+        <table id="invTable">
+          <thead>
+            <tr>
+              <th>Recycled Item</th>
+              <th>Source Waste</th>
+              <th>Unit</th>
+              <th>Stock In (Total)</th>
+              <th>Sold</th>
+              <th>Remaining Stock</th>
+              <th>Price / Unit</th>
+              <th>Remaining Value</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in inventory %}
+            {% set low_name = item['category_name']|lower %}
+            {% if 'organic' in low_name %}{% set src='organic' %}{% elif 'plastic' in low_name %}{% set src='plastic' %}{% elif 'paper' in low_name %}{% set src='paper' %}{% elif 'metal' in low_name %}{% set src='metal' %}{% elif 'glass' in low_name %}{% set src='glass' %}{% elif 'e-waste' in low_name or 'ewaste' in low_name %}{% set src='ewaste' %}{% elif 'textile' in low_name or 'cloth' in low_name %}{% set src='textile' %}{% else %}{% set src='' %}{% endif %}
+            {% set unit = (item['unit'] or 'kg')|lower %}
+            {% set remaining = item['remaining_stock']|float %}
+            {% set stock_in  = item['total_stock']|float %}
+            {% set sold      = item['sold_qty']|float %}
+            {% if remaining > 50 %}{% set stock_level='high' %}{% elif remaining >= 10 %}{% set stock_level='mid' %}{% elif remaining > 0 %}{% set stock_level='low' %}{% else %}{% set stock_level='out' %}{% endif %}
+            {% set bar_pct = [((remaining / stock_in * 100) if stock_in > 0 else 0)|int, 100]|min %}
+            <tr data-category="{{ item['category_name']|lower }}" data-unit="{{ unit }}" data-stock="{{ stock_level }}" data-name="{{ item['recycled_name']|lower }}">
+              <td><span class="name">{{ item['recycled_name'] }}</span><span class="sub">ID: #{{ item['recycled_id'] }}</span></td>
+              <td><span class="badge badge-source {{ src }}">{{ item['category_name'] }}</span></td>
+              <td><span class="badge badge-{{ unit }}">{{ unit|upper }}</span></td>
+              <td style="font-family:'JetBrains Mono'; font-weight:600;">
+                {% if unit == 'kg' %}{{ "%.2f"|format(stock_in) }}{% else %}{{ stock_in|int }}{% endif %} {{ unit }}
+              </td>
+              <td style="font-family:'JetBrains Mono'; color:{% if sold > 0 %}#2A6B5E{% else %}#8B8B8B{% endif %}; font-weight:{% if sold > 0 %}700{% else %}400{% endif %};">
+                {% if unit == 'kg' %}{{ "%.2f"|format(sold) }}{% else %}{{ sold|int }}{% endif %} {{ unit }}
+              </td>
+              <td>
+                <div class="stock-bar"><div class="stock-fill {{ 'high' if remaining>50 else 'mid' if remaining>=10 else 'low' }}" style="width:{{ bar_pct }}%"></div></div>
+                <span class="stock-text">{% if unit == 'kg' %}{{ "%.2f"|format(remaining) }}{% else %}{{ remaining|int }}{% endif %}</span>
+              </td>
+              <td>₹ {{ item['resale_price_per_kg'] }}/{{ unit }}</td>
+              <td class="profit">₹ {{ (remaining * (item['resale_price_per_kg']|float))|int }}</td>
+              <td>
+                {% if stock_level=='high' %}<span class="badge" style="background:#E8F5E9; color:#2E7D32;">● High</span>
+                {% elif stock_level=='mid' %}<span class="badge" style="background:#FFF8E1; color:#8A6D00;">● Medium</span>
+                {% elif stock_level=='low' %}<span class="badge" style="background:#FFEBEE; color:#C62828;">● Low</span>
+                {% else %}<span class="badge" style="background:#ECEFF1; color:#546E7A;">● Out of Stock</span>{% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="9" style="text-align:center; padding:30px; color:#8B8B8B; font-family:'JetBrains Mono';">No inventory yet. Staff must add recycled products to inventory from the Recycling Dashboard.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- MOBILE CARDS -->
+      <div class="card-grid" id="cardGrid">
+        {% for item in inventory %}
+        {% set unit = (item['unit'] or 'kg')|lower %}
+        {% set remaining = item['remaining_stock']|float %}
+        {% set sold = item['sold_qty']|float %}
+        {% set stock_in = item['total_stock']|float %}
+        <div class="inv-item" data-category="{{ item['category_name']|lower }}" data-unit="{{ unit }}" data-stock="{{ 'high' if remaining>50 else 'mid' if remaining>=10 else 'low' if remaining>0 else 'out' }}" data-name="{{ item['recycled_name']|lower }}">
+          <h3>{{ item['recycled_name'] }}</h3>
+          <small style="font-family:'JetBrains Mono'; color:#8B8B8B;">{{ item['category_name'] }} • {{ unit|upper }}</small>
+          <div style="display:flex; justify-content:space-between; font-size:12px;"><span>Stock In:</span><b>{% if unit=='kg' %}{{ "%.2f"|format(stock_in) }}{% else %}{{ stock_in|int }}{% endif %} {{ unit }}</b></div>
+          <div style="display:flex; justify-content:space-between; font-size:12px;"><span>Sold:</span><b style="color:#2A6B5E;">{% if unit=='kg' %}{{ "%.2f"|format(sold) }}{% else %}{{ sold|int }}{% endif %} {{ unit }}</b></div>
+          <div style="display:flex; justify-content:space-between; font-size:12px;"><span>Remaining:</span><b>{% if unit=='kg' %}{{ "%.2f"|format(remaining) }}{% else %}{{ remaining|int }}{% endif %} {{ unit }}</b></div>
+          <div style="display:flex; justify-content:space-between; font-size:12px;"><span>Price:</span><b>₹ {{ item['resale_price_per_kg'] }}/{{ unit }}</b></div>
+          <div style="display:flex; justify-content:space-between; font-size:12px;"><span>Value:</span><b class="profit">₹ {{ (remaining * (item['resale_price_per_kg']|float))|int }}</b></div>
+        </div>
+        {% endfor %}
+      </div>
+      <p id="noRes" style="display:none; text-align:center; padding:30px; color:#8B8B8B; font-family:'JetBrains Mono';">No items match filter.</p>
+    </section>
+  </main>
+</div>
+
+<script>
+function filterTable(){
+  const cat    = document.getElementById('catFilter').value.toLowerCase();
+  const unit   = document.getElementById('unitFilter').value.toLowerCase();
+  const stock  = document.getElementById('stockFilter').value.toLowerCase();
+  const search = document.getElementById('searchBox').value.toLowerCase();
+  const rows   = document.querySelectorAll('#invTable tbody tr[data-category]');
+  const cards  = document.querySelectorAll('.inv-item');
+  let visible  = 0;
+  rows.forEach(r => {
+    const c = r.dataset.category; const u = r.dataset.unit; const s = r.dataset.stock; const n = r.dataset.name;
+    const ok = (cat==='all'||c.includes(cat)) && (unit==='all'||u===unit) && (stock==='all'||s===stock) && (n.includes(search)||c.includes(search));
+    r.style.display = ok ? '' : 'none'; if(ok) visible++;
+  });
+  cards.forEach(c => {
+    const cc = c.dataset.category; const uu = c.dataset.unit; const ss = c.dataset.stock; const nn = c.dataset.name;
+    const ok = (cat==='all'||cc.includes(cat)) && (unit==='all'||uu===unit) && (stock==='all'||ss===stock) && (nn.includes(search)||cc.includes(search));
+    c.style.display = ok ? 'flex' : 'none';
+  });
+  document.getElementById('visibleCount').innerText = visible + ' items';
+  document.getElementById('countLabel').innerText = visible + ' items';
+  document.getElementById('noRes').style.display = visible===0 ? 'block' : 'none';
+}
+function clearFilters(){
+  document.getElementById('catFilter').value='all';
+  document.getElementById('unitFilter').value='all';
+  document.getElementById('stockFilter').value='all';
+  document.getElementById('searchBox').value='';
+  filterTable();
+}
+</script>
+</body>
+</html>

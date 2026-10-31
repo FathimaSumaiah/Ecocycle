@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>EcoCycle — Recycling Center Sales Log</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#F4F5F1;--panel:#FFFFFF;--panel-raised:#F8F9F6;--line:#E4E7E0;--text:#1E201D;--text-dim:#6B716A;--text-faint:#9AA096;--amber:#C17F1A;--amber-dim:#FEF3E0;--red:#B94E33;--red-dim:#FDECE8;--glass:#5A8A3A;--glass-dim:#EAF2E3;}
+  *{box-sizing:border-box;} body{margin:0;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;}
+ .wrap{max-width:100%; margin:0 auto; padding:18px 18px 60px;}
+ .table-wrap{width:100%; overflow-x:auto; border:1px solid var(--line); border-radius:8px;}
+  table{width:100%; min-width:1450px; border-collapse:collapse; font-size:12px; table-layout:auto;}
+  thead th{padding:8px 8px; font-size:9.5px; white-space:nowrap; font-family:'JetBrains Mono'; text-transform:uppercase; color:var(--text-faint); background:var(--panel-raised); border-bottom:2px solid var(--line); position:sticky; top:0;}
+  tbody td{padding:8px 8px; white-space:nowrap; font-size:12px;}
+  header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px;background:var(--panel);border-radius:8px;padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);border:1px solid var(--line);}
+ .brand-block{display:flex;align-items:center;gap:14px;}
+ .brand-mark{width:42px;height:42px;border:2px solid var(--amber);border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:'Oswald';font-weight:700;font-size:15px;color:var(--amber);background:var(--amber-dim);}
+ .brand-text h1{font-family:'Oswald';font-weight:700;font-size:22px;margin:0;text-transform:uppercase;}
+ .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+  @media(max-width:900px){.stats-grid{grid-template-columns:repeat(2,1fr);}}
+ .stat-card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;}
+ .stat-val{font-family:'Oswald';font-size:24px;font-weight:700;margin-top:4px;}
+ .stat-lab{font-family:'JetBrains Mono';font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.8px;}
+ .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.04);overflow:hidden;}
+ .card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px;}
+ .card-head h2{font-family:'Oswald';font-size:16px;text-transform:uppercase;letter-spacing:1px;margin:0;}
+ .filter-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+ .form-select,.form-input{padding:8px 12px;background:#fff;color:var(--text);border:1px solid var(--line);border-radius:6px;font-size:13px;outline:none;}
+ .form-select.error,.form-input.error{border:2px solid var(--red)!important; background:var(--red-dim)!important;}
+ .btn-filter{background:#1E201D;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-family:'JetBrains Mono';font-size:12px;font-weight:700;cursor:pointer;}
+  tbody tr:hover{background:#FAFBF9;}
+ .weight-cell{font-family:'JetBrains Mono';font-weight:700;}
+ .time-cell{font-family:'JetBrains Mono';color:var(--text-faint);font-size:11.5px;}
+ .badge{font-family:'JetBrains Mono';font-size:10px;padding:3px 8px;border-radius:10px;font-weight:700;}
+ .badge-resale{background:var(--glass-dim);color:var(--glass);border:1px solid #B9D0A8;}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="brand-block"><div class="brand-mark">EC</div><div class="brand-text"><h1>Recycling Center</h1><div style="font-family:'JetBrains Mono';font-size:11px;color:var(--text-faint);">Facility Dashboard · Sales & Resale Log</div></div></div>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <div style="text-align:right;"><div style="font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:1px;">Logged in</div><div style="font-family:'JetBrains Mono';font-size:14px;margin-top:3px;">{{ staff_name }}</div>
+      <div style="display:flex; gap:6px; margin-top:6px; justify-content:flex-end; flex-wrap:wrap;">
+        <a href="/recycling_dashboard" style="text-decoration:none; background:#1A3C34; color:#fff; font-weight:700; border-radius:20px; padding:6px 14px; font-family:'JetBrains Mono'; font-size:11px;">🏠 Dashboard</a>
+        <a href="/staff/totalwastes" style="text-decoration:none; background:#1A3C34; color:#fff; font-weight:700; border-radius:20px; padding:6px 14px; font-family:'JetBrains Mono'; font-size:11px;">📦 Collection History</a>
+        <a href="/staff/recycling_log" style="text-decoration:none; background:#5A8A3A; color:#fff; font-weight:700; border-radius:20px; padding:6px 14px; font-family:'JetBrains Mono'; font-size:11px;">♻ Recycling Log</a>
+        <a href="/staff/sales" style="text-decoration:none; background:#C17F1A; color:#fff; font-weight:700; border-radius:20px; padding:6px 14px; font-family:'JetBrains Mono'; font-size:11px; box-shadow:0 0 0 2px #1E201D, 0 2px 8px rgba(0,0,0,0.3); border:1px solid #fff;">💰 Sales Log</a>
+        <a href="/all_disposals" style="text-decoration:none; background:#B94E33; color:#fff; font-weight:700; border-radius:20px; padding:6px 14px; font-family:'JetBrains Mono'; font-size:11px;">🗑 Disposal Log</a>
+      </div>
+    </div>
+    <a href="{{ url_for('staff_profile') }}" style="width:44px;height:44px;border-radius:50%;background:var(--panel-raised);border:2px solid var(--amber);display:grid;place-items:center;text-decoration:none;color:var(--amber);font-size:20px;">👤</a>
+  </div>
+</header>
+
+<div class="stats-grid">
+  <div class="stat-card" style="border-left:4px solid var(--amber);"><div class="stat-lab">Today Sales Revenue</div><div class="stat-val" style="color:var(--amber);">₹{{ today_rev|int }}</div></div>
+  <div class="stat-card" style="border-left:4px solid var(--glass);"><div class="stat-lab">Total Resale Revenue</div><div class="stat-val" style="color:var(--glass);">₹{{ total_rev|int }}</div></div>
+  <div class="stat-card"><div class="stat-lab">Total Resale Transactions</div><div class="stat-val">{{ total_cnt }} sales</div></div>
+  <div class="stat-card" style="border-left:4px solid var(--red);"><div class="stat-lab">Disposed Today</div><div class="stat-val" style="color:var(--red);">{{ disposal_kg|int }} kg</div></div>
+</div>
+
+{% with messages = get_flashed_messages() %}{% if messages %}{% for m in messages %}<div style="background:#1E201D; color:#fff; padding:10px 16px; border-radius:6px; margin-bottom:14px; font-size:13px;">{{ m }}</div>{% endfor %}{% endif %}{% endwith %}
+
+<!-- ADD FORM -->
+<div class="card" style="margin-bottom:20px; border-left:4px solid var(--glass);">
+  <div class="card-head"><h2 style="color:var(--glass);">💰 Record New Resale Transaction</h2><span id="availableStockBadge" style="font-family:'JetBrains Mono'; font-size:11px; color:var(--glass); font-weight:700; display:none;"></span></div>
+  <form method="POST" action="/add_sale" onsubmit="return validateSaleForm()" style="display:flex; flex-direction:column; gap:12px;">
+    <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;">
+      <div style="flex:1.5; min-width:220px;"><label style="font-size:10px; font-family:'JetBrains Mono'; color:var(--text-faint); text-transform:uppercase;">Select Recycled Product *</label><select name="recycled_id" id="saleProduct" required class="form-select" onchange="handleProductSelect()"><option value="">Select product to sell...</option>{% for p in products %}<option value="{{ p['recycled_id'] }}" data-unit="{{ p['unit'] }}" data-rate="{{ p['resale_price_per_kg'] or p['resale_price_per_count'] }}" data-stock-kg="{{ p['stock_kg'] }}" data-stock-cnt="{{ p['stock_count'] }}">{{ p['recycled_name'] }} ({{ p['category_name'] }}) — Stock: {% if p['unit']=='kg' %}{{ "%.2f"|format(p['stock_kg']|float) }} kg{% else %}{{ p['stock_count'] }} {{ p['unit'] }}{% endif %}</option>{% endfor %}</select></div>
+      <div style="width:130px;" id="soldKgGroup"><label style="font-size:10px; font-family:'JetBrains Mono'; color:var(--text-faint); text-transform:uppercase;">Quantity (KG) *</label><input type="number" step="0.01" min="0.01" name="sold_kg" id="soldKg" class="form-input" placeholder="10.5" oninput="calcTotal()"></div>
+      <div style="width:130px; display:none;" id="soldCntGroup"><label style="font-size:10px; font-family:'JetBrains Mono'; color:var(--text-faint); text-transform:uppercase;">Quantity (PCS) *</label><input type="number" step="1" min="1" name="sold_count" id="soldCount" class="form-input" placeholder="5" oninput="calcTotal()"></div>
+      <div style="width:120px;"><label style="font-size:10px; font-family:'JetBrains Mono'; color:var(--text-faint); text-transform:uppercase;">Rate / Unit (₹) *</label><input type="number" step="0.01" min="0.01" name="rate_per_unit" id="ratePerUnit" required class="form-input" placeholder="0.00" oninput="calcTotal()"></div>
+      <div style="width:90px;"><label style="font-size:10px; font-family:'JetBrains Mono'; color:var(--text-faint); text-transform:uppercase;">GST % *</label><input type="number" step="0.1" min="0" max="28" name="gst_percent" id="gstPercent" value="0" class="form-input" oninput="calcTotal()"></div>
+      <div style="width:130px; background:var(--glass-dim); border:1px solid #B9D0A8; padding:8px 12px; border-radius:6px; text-align:center;"><span style="font-size:9px; font-family:'JetBrains Mono'; color:var(--glass); text-transform:uppercase; font-weight:700; display:block;">Total Amount</span><span id="displayTotal" style="font-family:'Oswald'; font-size:18px; font-weight:700; color:var(--glass);">₹0.00</span></div>
+    </div>
+    <div id="stockWarnMsg" style="display:none; color:var(--red); font-family:'JetBrains Mono'; font-size:11px; font-weight:700; background:var(--red-dim); border:1px solid #E8B0A3; padding:6px 12px; border-radius:4px;"></div>
+    <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;">
+      <div style="flex:1; min-width:180px;"><label style="font-size:10px; font-family:'JetBrains Mono'; color:var(--text-faint); text-transform:uppercase;">Buyer Company / Name *</label><input type="text" name="company_name" id="companyName" required placeholder="e.g. ABC Recycling Industries" class="form-input"></div>
+      <div style="flex:1; min-width:140px;"><label style="font-size:10px; font-family:'JetBrains Mono'; color:var(--text-faint); text-transform:uppercase;">Buyer Place *</label><input type="text" name="buyer_place" id="buyerPlace" required placeholder="e.g. Calicut, Kochi" class="form-input"></div>
+      <div style="flex:1; min-width:140px;"><label style="font-size:10px; font-family:'JetBrains Mono'; color:var(--text-faint); text-transform:uppercase;">Contact Person *</label><input type="text" name="buyer_details" id="buyerDetails" required placeholder="Contact Name" class="form-input"></div>
+      <div style="width:130px;"><label style="font-size:10px; font-family:'JetBrains Mono'; color:var(--text-faint); text-transform:uppercase;">Phone Number *</label><input type="text" name="buyer_contact" id="buyerContact" required placeholder="10-digit Phone" class="form-input"></div>
+      <div style="width:120px;"><label style="font-size:10px; font-family:'JetBrains Mono'; color:var(--text-faint); text-transform:uppercase;">Payment Mode *</label><select name="payment_mode" id="paymentMode" required class="form-select"><option value="">Select Mode</option><option value="UPI / Online">UPI / Online</option><option value="Bank Transfer">Bank Transfer</option><option value="Cash">Cash</option><option value="Cheque">Cheque</option></select></div>
+      <div style="width:110px;"><label style="font-size:10px; font-family:'JetBrains Mono'; color:var(--text-faint); text-transform:uppercase;">Vehicle No *</label><input type="text" name="vehicle_no" id="vehicleNo" required placeholder="KL-11-XX-0000" class="form-input"></div>
+      <div style="flex:1; min-width:120px;"><label style="font-size:10px; font-family:'JetBrains Mono'; color:var(--text-faint); text-transform:uppercase;">Remarks / Notes</label><input type="text" name="remarks" id="remarks" placeholder="Optional notes" class="form-input"></div>
+      <div><button type="submit" style="background:var(--glass); color:#fff; border:none; padding:10px 20px; border-radius:6px; font-weight:700; font-size:13.5px; cursor:pointer;">Confirm Sale →</button></div>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="card-head">
+    <h2 style="color:var(--amber);">💰 Resale Transaction Log — All Columns</h2>
+    <form method="GET" class="filter-bar">
+      <input type="text" name="search" class="form-input" placeholder="Search product, buyer, staff..." value="{{ search }}" style="width:220px;">
+      <button type="submit" class="btn-filter">Filter</button>
+      <a href="/staff/sales" style="padding:8px 12px; border:1px solid var(--line); border-radius:6px; text-decoration:none; color:var(--text); font-family:'JetBrains Mono'; font-size:12px;">Clear</a>
+    </form>
+  </div>
+  <div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>#ID</th><th>Date & Time</th><th>Recycled Product</th><th>Unit</th><th>Qty KG</th><th>Qty PCS</th><th>Rate / Unit (₹)</th><th>GST %</th><th>Base Amount (₹)</th><th>Total Amount (₹)</th><th>Buyer Company / Name</th><th>Place</th><th>Contact Person</th><th>Phone Number</th><th>Payment Mode</th><th>Vehicle No</th><th>Remarks / Notes</th><th>Handled By Staff</th><th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in sales %}
+      {% set rate_val = (s['rate_per_kg'] if s['qty_kg'] and s['qty_kg']>0 else s['rate_per_count']) or 0 %}
+      {% set qty_val = (s['qty_kg'] if s['qty_kg'] and s['qty_kg']>0 else s['qty_count']) or 0 %}
+      {% set base_val = qty_val * rate_val %}
+      {% if base_val == 0 and s['amount'] %}{% set base_val = s['amount'] / (1 + (s['gst_percent'] or 0)/100) %}{% endif %}
+      <tr>
+        <td class="time-cell">#{{ s['id'] }}</td>
+        <td class="time-cell">{{ s['created_at'].strftime('%d %b %Y') if s['created_at'] else '' }}<br>{{ s['created_at'].strftime('%I:%M %p') if s['created_at'] else '' }}</td>
+        <td><b>{{ s['recycled_name'] }}</b></td>
+        <td><span class="badge badge-resale">{{ s['unit'] }}</span></td>
+        <td class="weight-cell">{% if s['qty_kg'] and s['qty_kg']>0 %}{{ s['qty_kg'] }}{% else %}-{% endif %}</td>
+        <td class="weight-cell">{% if s['qty_count'] and s['qty_count']>0 %}{{ s['qty_count'] }}{% else %}-{% endif %}</td>
+        <td>₹{{ rate_val }}</td>
+        <td>{{ s['gst_percent'] or 0 }}%</td>
+        <td>₹{{ "%.2f"|format(base_val) }}</td>
+        <td class="weight-cell" style="color:var(--glass);">₹{{ s['amount']|int }}</td>
+        <td><b>{{ s['buyer_company'] or '-' }}</b></td>
+        <td>{{ s['buyer_place'] or '-' }}</td>
+        <td>{{ s['buyer_name'] or '-' }}</td>
+        <td>{{ s['buyer_contact'] or '-' }}</td>
+        <td>{{ s['payment_mode'] or '-' }}</td>
+        <td>{{ s['vehicle_no'] or '-' }}</td>
+        <td style="max-width:180px; white-space:normal; font-size:11px;">{{ s['description'] or '-' }}</td>
+        <td>{{ s['staff_name'] or ('Staff #' + s['staff_id']|string) }}</td>
+        <td><button type="button" onclick="openEditSaleModal({{ s['id'] }}, {{ s['recycled_id'] }}, '{{ (s['recycled_name'] or '')|e }}', '{{ s['unit'] }}', {{ s['qty_kg'] or 0 }}, {{ s['qty_count'] or 0 }}, {{ rate_val }}, {{ s['gst_percent'] or 0 }}, '{{ (s['buyer_company'] or '')|e }}', '{{ (s['buyer_place'] or '')|e }}', '{{ (s['buyer_name'] or '')|e }}', '{{ (s['buyer_contact'] or '')|e }}', '{{ (s['payment_mode'] or 'Cash')|e }}', '{{ (s['vehicle_no'] or '')|e }}', '{{ (s['description'] or '')|e }}')" style="background:var(--amber); color:#fff; border:none; padding:5px 10px; border-radius:4px; font-weight:700; font-size:11px; cursor:pointer;">✏ Edit</button></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="19" style="text-align:center; padding:30px; color:var(--text-faint);">No sales found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+</div>
+
+<div id="editSaleModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+  <div style="background:#fff; width:100%; max-width:600px; padding:24px; border-radius:12px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;"><h3 style="margin:0; font-family:'Oswald'; color:var(--amber);">✏ Edit Sale #<span id="modalSaleIdTitle"></span></h3><button type="button" onclick="closeEditSaleModal()" style="border:none; background:none; font-size:20px; cursor:pointer;">✕</button></div>
+    <form id="editSaleForm" method="POST" action="" onsubmit="return validateEditSaleForm()">
+      <div style="margin-bottom:10px;"><label style="font-size:10px; font-family:'JetBrains Mono'; text-transform:uppercase; color:var(--text-faint);">Product</label><input type="text" id="editProductName" readonly style="width:100%; padding:8px 12px; background:var(--panel-raised); border:1px solid var(--line); border-radius:6px; font-weight:700;"></div>
+      <div style="display:flex; gap:10px; margin-bottom:10px;">
+        <div style="flex:1;" id="editKgGroup"><label style="font-size:10px; font-family:'JetBrains Mono'; text-transform:uppercase; color:var(--text-faint);">Sold Qty (KG) *</label><input type="number" step="0.01" min="0.01" name="sold_kg" id="editSoldKg" class="form-input" oninput="calcEditTotal()"></div>
+        <div style="flex:1; display:none;" id="editCntGroup"><label style="font-size:10px; font-family:'JetBrains Mono'; text-transform:uppercase; color:var(--text-faint);">Sold Qty (PCS) *</label><input type="number" step="1" min="1" name="sold_count" id="editSoldCount" class="form-input" oninput="calcEditTotal()"></div>
+        <div style="flex:1;"><label style="font-size:10px; font-family:'JetBrains Mono'; text-transform:uppercase; color:var(--text-faint);">Rate / Unit (₹) *</label><input type="number" step="0.01" min="0.01" name="rate_per_unit" id="editRatePerUnit" required class="form-input" oninput="calcEditTotal()"></div>
+        <div style="width:90px;"><label style="font-size:10px; font-family:'JetBrains Mono'; text-transform:uppercase; color:var(--text-faint);">GST % *</label><input type="number" step="0.1" min="0" max="28" name="gst_percent" id="editGstPercent" class="form-input" oninput="calcEditTotal()"></div>
+      </div>
+      <div style="background:var(--amber-dim); border:1px solid #E4E7E0; padding:8px 12px; border-radius:6px; text-align:center; margin-bottom:10px;"><span style="font-size:10px; font-family:'JetBrains Mono'; color:var(--amber); font-weight:700;">TOTAL:</span><span id="editDisplayTotal" style="font-family:'Oswald'; font-size:18px; font-weight:700; color:var(--amber); margin-left:8px;">₹0.00</span></div>
+      <div style="display:flex; gap:10px; margin-bottom:10px;">
+        <div style="flex:1;"><label style="font-size:10px; font-family:'JetBrains Mono'; text-transform:uppercase; color:var(--text-faint);">Buyer Company *</label><input type="text" name="company_name" id="editCompanyName" required class="form-input"></div>
+        <div style="flex:1;"><label style="font-size:10px; font-family:'JetBrains Mono'; text-transform:uppercase; color:var(--text-faint);">Place *</label><input type="text" name="buyer_place" id="editBuyerPlace" required class="form-input"></div>
+        <div style="flex:1;"><label style="font-size:10px; font-family:'JetBrains Mono'; text-transform:uppercase; color:var(--text-faint);">Contact Person *</label><input type="text" name="buyer_details" id="editBuyerName" required class="form-input"></div>
+      </div>
+      <div style="display:flex; gap:10px; margin-bottom:10px;"><div style="flex:1;"><label style="font-size:10px; font-family:'JetBrains Mono'; text-transform:uppercase; color:var(--text-faint);">Phone *</label><input type="text" name="buyer_contact" id="editBuyerContact" required class="form-input"></div><div style="flex:1;"><label style="font-size:10px; font-family:'JetBrains Mono'; text-transform:uppercase; color:var(--text-faint);">Payment Mode *</label><select name="payment_mode" id="editPaymentMode" required class="form-select"><option value="">Select</option><option>UPI / Online</option><option>Bank Transfer</option><option>Cash</option><option>Cheque</option></select></div><div style="flex:1;"><label style="font-size:10px; font-family:'JetBrains Mono'; text-transform:uppercase; color:var(--text-faint);">Vehicle No *</label><input type="text" name="vehicle_no" id="editVehicleNo" required class="form-input"></div></div>
+      <div style="margin-bottom:16px;"><label style="font-size:10px; font-family:'JetBrains Mono'; text-transform:uppercase; color:var(--text-faint);">Remarks</label><input type="text" name="remarks" id="editRemarks" class="form-input"></div>
+      <div style="display:flex; gap:10px;"><button type="button" onclick="closeEditSaleModal()" style="flex:1; padding:10px; border:1px solid var(--line); background:#fff; border-radius:6px; cursor:pointer;">Cancel</button><button type="submit" style="flex:1; padding:10px; border:none; background:var(--amber); color:#fff; font-weight:700; border-radius:6px; cursor:pointer;">Save Changes →</button></div>
+    </form>
+  </div>
+</div>
+
+<script>
+let editSaleUnit='kg';
+let editOldKg=0, editOldCnt=0, editMaxKg=0, editMaxCnt=0, editCurrentStockKg=0, editCurrentStockCnt=0;
+function clearErr(el){if(el){el.classList.remove('error'); el.style.border='1px solid var(--line)'; el.style.background='';}}
+function markErr(el,msg){if(el)el.classList.add('error'); alert(msg); if(el)el.focus(); return false;}
+function getProductStockMap(){
+  const map={}; const sel=document.getElementById('saleProduct');
+  if(!sel) return map;
+  for(let i=0;i<sel.options.length;i++){ const opt=sel.options[i]; if(!opt.value) continue; map[opt.value]={ name: opt.text, unit: opt.dataset.unit||'kg', stockKg: parseFloat(opt.dataset.stockKg||0), stockCnt: parseInt(opt.dataset.stockCnt||0) }; }
+  return map;
+}
+function handleProductSelect(){
+  const sel=document.getElementById('saleProduct'); const badge=document.getElementById('availableStockBadge');
+  if(!sel.value){document.getElementById('soldKgGroup').style.display='block'; document.getElementById('soldCntGroup').style.display='none'; document.getElementById('ratePerUnit').value=''; if(badge)badge.style.display='none'; calcTotal(); return;}
+  const opt=sel.options[sel.selectedIndex]; const unit=opt.dataset.unit||'kg'; const rate=opt.dataset.rate||0; const stockKg=parseFloat(opt.dataset.stockKg||0); const stockCnt=parseInt(opt.dataset.stockCnt||0);
+  document.getElementById('ratePerUnit').value=rate;
+  if(badge){badge.innerText=`Available: ${unit==='kg'?stockKg.toFixed(2)+' kg':stockCnt+' pcs'}`; badge.style.display='inline'; badge.style.color=(unit==='kg'?stockKg:stockCnt)>0?'var(--glass)':'var(--red)';}
+  document.getElementById('soldKgGroup').style.display=unit==='kg'?'block':'none'; document.getElementById('soldCntGroup').style.display=unit!=='kg'?'block':'none'; calcTotal();
+}
+function calcTotal(){
+  const sel=document.getElementById('saleProduct'); const opt=sel&&sel.selectedIndex>=0?sel.options[sel.selectedIndex]:null; const unit=opt?(opt.dataset.unit||'kg'):'kg';
+  const stockKg=opt?parseFloat(opt.dataset.stockKg||0):0; const stockCnt=opt?parseInt(opt.dataset.stockCnt||0):0;
+  const kg=parseFloat(document.getElementById('soldKg').value||0); const cnt=parseFloat(document.getElementById('soldCount').value||0); const rate=parseFloat(document.getElementById('ratePerUnit').value||0); const gst=parseFloat(document.getElementById('gstPercent').value||0);
+  const qty=unit==='kg'?kg:cnt; const avail=unit==='kg'?stockKg:stockCnt; const warn=document.getElementById('stockWarnMsg');
+  if(opt&&sel.value&&qty>avail){warn.innerText=`⚠ Exceeds stock! Available ${avail} ${unit}`; warn.style.display='block';} else {warn.style.display='none';}
+  const base=qty*rate; document.getElementById('displayTotal').innerText='₹'+(base+base*gst/100).toFixed(2);
+}
+function validateSaleForm(){
+  const sel=document.getElementById('saleProduct'), companyEl=document.getElementById('companyName'), placeEl=document.getElementById('buyerPlace'), buyerEl=document.getElementById('buyerDetails'), phoneEl=document.getElementById('buyerContact'), payEl=document.getElementById('paymentMode'), vehicleEl=document.getElementById('vehicleNo'), remarksEl=document.getElementById('remarks'), rateEl=document.getElementById('ratePerUnit'), gstEl=document.getElementById('gstPercent'), kgEl=document.getElementById('soldKg'), cntEl=document.getElementById('soldCount');
+  [sel,companyEl,placeEl,buyerEl,phoneEl,payEl,vehicleEl,remarksEl,rateEl,gstEl,kgEl,cntEl].forEach(clearErr);
+  if(!sel.value) return markErr(sel,"❌ Select Recycled Product.");
+  const opt=sel.options[sel.selectedIndex]; const unit=opt.dataset.unit||'kg'; const stockKg=parseFloat(opt.dataset.stockKg||0); const stockCnt=parseInt(opt.dataset.stockCnt||0);
+  if(unit==='kg'){const kg=parseFloat(kgEl.value||0); if(isNaN(kg)||kg<=0) return markErr(kgEl,"❌ Enter KG >0."); if(kg>stockKg) return markErr(kgEl,`❌ Only ${stockKg.toFixed(2)} kg available.`);} else {const cnt=parseInt(cntEl.value||0); if(isNaN(cnt)||cnt<=0) return markErr(cntEl,"❌ Enter PCS >0."); if(cnt>stockCnt) return markErr(cntEl,`❌ Only ${stockCnt} pcs available.`);}
+  const rate=parseFloat(rateEl.value||0); if(isNaN(rate)||rate<=0) return markErr(rateEl,"❌ Rate > ₹0 required."); const gst=parseFloat(gstEl.value||0); if(isNaN(gst)||gst<0||gst>28) return markErr(gstEl,"❌ GST 0-28% only.");
+  const comp=companyEl.value.trim(); if(!comp||comp.length<2) return markErr(companyEl,"❌ Buyer Company min 2 chars."); if(!/^[a-zA-Z0-9 \-_.,&()\/]+$/.test(comp)) return markErr(companyEl,"❌ Company invalid chars.");
+  const place=placeEl.value.trim(); if(!place||place.length<2) return markErr(placeEl,"❌ Buyer Place min 2 chars.");
+  const buyer=buyerEl.value.trim(); if(!buyer||buyer.length<2) return markErr(buyerEl,"❌ Contact Person min 2 chars.");
+  const phone=phoneEl.value.trim(); if(!/^[6-9]\d{9}$/.test(phone)) return markErr(phoneEl,"❌ Valid 10-digit phone 6-9 start.");
+  if(!payEl.value) return markErr(payEl,"❌ Select Payment Mode.");
+  const veh=vehicleEl.value.trim().toUpperCase(); vehicleEl.value=veh;
+  if(!veh) return markErr(vehicleEl,"❌ Vehicle Number is required.");
+  if(veh.length<6 || veh.length>15) return markErr(vehicleEl,"❌ Vehicle No must be 6-15 chars (e.g. KL-10-9089)");
+  if(!/^[A-Z]{2}[- ]?[0-9]{1,2}[- ]?([A-Z]{1,3})?[- ]?[0-9]{1,4}$/.test(veh)) return markErr(vehicleEl,"❌ Invalid Vehicle No. Format: KL-10-9089");
+  const rem=remarksEl.value.trim(); if(rem&&rem.length<2) return markErr(remarksEl,"❌ Remarks min 2 chars."); if(rem.length>200) return markErr(remarksEl,"❌ Remarks max 200.");
+  return true;
+}
+function openEditSaleModal(id, recycled_id, name, unit, kg, cnt, rate, gst, comp, place, buyer, phone, pay, veh, rem){
+  editSaleUnit=unit||'kg'; editOldKg=parseFloat(kg||0); editOldCnt=parseInt(cnt||0);
+  const stockMap=getProductStockMap(); const prod=stockMap[recycled_id];
+  if(prod){ editCurrentStockKg=prod.stockKg; editCurrentStockCnt=prod.stockCnt; } else { editCurrentStockKg=0; editCurrentStockCnt=0; }
+  editMaxKg = editCurrentStockKg + editOldKg; editMaxCnt = editCurrentStockCnt + editOldCnt;
+  document.getElementById('modalSaleIdTitle').innerText=id; document.getElementById('editSaleForm').action='/staff/edit_sale/'+id;
+  document.getElementById('editProductName').value=name + ` [Stock: ${editCurrentStockKg} kg / ${editCurrentStockCnt} pcs | Max editable: ${editSaleUnit==='kg'?editMaxKg.toFixed(2)+' kg':editMaxCnt+' pcs'}]`;
+  if(editSaleUnit==='kg'){ document.getElementById('editKgGroup').style.display='block'; document.getElementById('editCntGroup').style.display='none'; document.getElementById('editSoldKg').value=kg>0?kg:''; document.getElementById('editSoldCount').value=''; document.getElementById('editSoldKg').max=editMaxKg; } else { document.getElementById('editKgGroup').style.display='none'; document.getElementById('editCntGroup').style.display='block'; document.getElementById('editSoldKg').value=''; document.getElementById('editSoldCount').value=cnt>0?cnt:''; document.getElementById('editSoldCount').max=editMaxCnt; }
+  document.getElementById('editRatePerUnit').value=rate; document.getElementById('editGstPercent').value=gst; document.getElementById('editCompanyName').value=comp; document.getElementById('editBuyerPlace').value=place; document.getElementById('editBuyerName').value=buyer; document.getElementById('editBuyerContact').value=phone; document.getElementById('editPaymentMode').value=pay||'Cash'; document.getElementById('editVehicleNo').value=veh; document.getElementById('editRemarks').value=rem;
+  calcEditTotal(); document.getElementById('editSaleModal').style.display='flex';
+  let warnEl=document.getElementById('editStockWarn');
+  if(!warnEl){ warnEl=document.createElement('div'); warnEl.id='editStockWarn'; warnEl.style.cssText='color:var(--red); font-family:JetBrains Mono; font-size:11px; font-weight:700; background:var(--red-dim); border:1px solid #E8B0A3; padding:6px 12px; border-radius:4px; margin-bottom:10px; display:none;'; document.getElementById('editSaleForm').insertBefore(warnEl, document.getElementById('editSaleForm').children[2]); }
+  warnEl.style.display='block'; warnEl.innerText=`Available Stock: ${editCurrentStockKg.toFixed(2)} kg / ${editCurrentStockCnt} pcs | Old Sale: ${editOldKg} kg / ${editOldCnt} pcs | You can max set: ${editMaxKg.toFixed(2)} kg / ${editMaxCnt} pcs`;
+}
+function closeEditSaleModal(){document.getElementById('editSaleModal').style.display='none';}
+function calcEditTotal(){
+  const rate=parseFloat(document.getElementById('editRatePerUnit').value||0); const kg=parseFloat(document.getElementById('editSoldKg').value||0); const cnt=parseFloat(document.getElementById('editSoldCount').value||0); const gst=parseFloat(document.getElementById('editGstPercent').value||0); const qty=editSaleUnit==='kg'?kg:cnt;
+  document.getElementById('editDisplayTotal').innerText='₹'+(qty*rate+qty*rate*gst/100).toFixed(2);
+  let warnEl=document.getElementById('editStockWarn');
+  if(warnEl){
+    if(editSaleUnit==='kg' && kg > editMaxKg){ warnEl.style.display='block'; warnEl.style.background='var(--red-dim)'; warnEl.innerText=`❌ Exceeds! You entered ${kg} kg but max allowed is ${editMaxKg.toFixed(2)} kg`; } else if(editSaleUnit!=='kg' && cnt > editMaxCnt){ warnEl.style.display='block'; warnEl.style.background='var(--red-dim)'; warnEl.innerText=`❌ Exceeds! You entered ${cnt} pcs but max allowed is ${editMaxCnt} pcs`; } else { warnEl.style.display='block'; warnEl.style.background='#EAF2E3'; warnEl.style.color='#5A8A3A'; warnEl.style.borderColor='#B9D0A8'; warnEl.innerText=`✅ OK - Available: ${editCurrentStockKg.toFixed(2)} kg / ${editCurrentStockCnt} pcs | Old: ${editOldKg}/${editOldCnt} | Max: ${editMaxKg.toFixed(2)} kg / ${editMaxCnt} pcs`; }
+  }
+}
+function validateEditSaleForm(){
+  const companyEl=document.getElementById('editCompanyName'), placeEl=document.getElementById('editBuyerPlace'), buyerEl=document.getElementById('editBuyerName'), phoneEl=document.getElementById('editBuyerContact'), payEl=document.getElementById('editPaymentMode'), vehicleEl=document.getElementById('editVehicleNo'), remarksEl=document.getElementById('editRemarks'), rateEl=document.getElementById('editRatePerUnit'), gstEl=document.getElementById('editGstPercent'), kgEl=document.getElementById('editSoldKg'), cntEl=document.getElementById('editSoldCount');
+  [companyEl,placeEl,buyerEl,phoneEl,payEl,vehicleEl,remarksEl,rateEl,gstEl,kgEl,cntEl].forEach(clearErr);
+  if(editSaleUnit==='kg'){ const kg=parseFloat(kgEl.value||0); if(isNaN(kg)||kg<=0) return markErr(kgEl,"❌ KG >0 required."); if(kg > editMaxKg) return markErr(kgEl,`❌ Exceeds stock! Max allowed ${editMaxKg.toFixed(2)} kg`); } else { const cnt=parseInt(cntEl.value||0); if(isNaN(cnt)||cnt<=0) return markErr(cntEl,"❌ PCS >0 required."); if(cnt > editMaxCnt) return markErr(cntEl,`❌ Exceeds stock! Max allowed ${editMaxCnt} pcs`); }
+  const rate=parseFloat(rateEl.value||0); if(isNaN(rate)||rate<=0) return markErr(rateEl,"❌ Rate >0."); const gst=parseFloat(gstEl.value||0); if(isNaN(gst)||gst<0||gst>28) return markErr(gstEl,"❌ GST 0-28%.");
+  const comp=companyEl.value.trim(); if(!comp||comp.length<2) return markErr(companyEl,"❌ Company required."); if(!/^[a-zA-Z0-9 \-_.,&()\/]+$/.test(comp)) return markErr(companyEl,"❌ Company invalid.");
+  const place=placeEl.value.trim(); if(!place||place.length<2) return markErr(placeEl,"❌ Place required.");
+  const buyer=buyerEl.value.trim(); if(!buyer||buyer.length<2) return markErr(buyerEl,"❌ Contact Person required.");
+  if(!/^[6-9]\d{9}$/.test(phoneEl.value.trim())) return markErr(phoneEl,"❌ Valid phone 6-9 start required.");
+  if(!payEl.value) return markErr(payEl,"❌ Payment Mode required.");
+  const veh=vehicleEl.value.trim().toUpperCase(); vehicleEl.value=veh;
+  if(!veh) return markErr(vehicleEl,"❌ Vehicle Number is required.");
+  if(veh.length<6 || veh.length>15) return markErr(vehicleEl,"❌ Vehicle No must be 6-15 chars (e.g. KL-10-9089)");
+  if(!/^[A-Z]{2}[- ]?[0-9]{1,2}[- ]?([A-Z]{1,3})?[- ]?[0-9]{1,4}$/.test(veh)) return markErr(vehicleEl,"❌ Invalid Vehicle No. Format: KL-10-9089");
+  const rem=remarksEl.value.trim(); if(rem&&rem.length>200) return markErr(remarksEl,"❌ Remarks max 200.");
+  return true;
+}
+</script>
+</body>
+</html>

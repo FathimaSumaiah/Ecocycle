@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoCycle Household Registration</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/register.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <style>
+        input::-ms-reveal,input::-ms-clear{display:none;}
+       .password-wrapper{position:relative; display:flex; align-items:center;}
+       .password-wrapper input{width:100%; padding-right:40px!important;}
+       .eye-icon{position:absolute; right:12px; cursor:pointer; color:#7A8A83; font-size:16px; z-index:2;}
+        small{display:block; margin-top:4px; font-size:12px;}
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="left-panel">
+        <h1>EcoCycle</h1>
+        <p>Smart Waste Collection<br>Recycling & Rewards Management System</p>
+        <div class="info-box">
+            <i class="fa-solid fa-circle-info"></i>
+            <h3>Household Registration</h3>
+            <p>Register your household to request waste pickup, earn reward points and contribute towards a cleaner environment.</p>
+            <ul>
+                <li>✔ Registration requires Admin Approval</li>
+                <li>✔ Aadhaar Verification Required</li>
+                <li>✔ Pin Your House Location</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="right-panel">
+        <div class="register-card">
+            <div class="circle"><i class="fa-solid fa-user-plus"></i></div>
+            <h2>Household Registration</h2>
+            <span>Create your EcoCycle account</span>
+
+            <!-- Top Pop Up Flash Message -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="top-flash-popup" style="background: #f8d7da; color: #842029; border: 1px solid #f5c2c7; padding: 14px 18px; border-radius: 12px; font-weight: 600; font-size: 14px; text-align: center; margin: 15px 0 20px 0; box-shadow: 0 4px 12px rgba(132,32,41,0.12); display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <i class="fa-solid fa-triangle-exclamation" style="font-size: 18px; color: #842029;"></i>
+                    <span>{{ message }}</span>
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
+            <form action="/register" method="POST" enctype="multipart/form-data">
+                <label>Full Name</label>
+                <input type="text" name="full_name" placeholder="Enter Full Name" required>
+
+                <label>Email Address</label>
+                <input type="email" name="email" placeholder="Enter Email Address" required>
+
+                <label>Phone Number</label>
+                <input type="tel" name="phone" id="phone" maxlength="10" pattern="[6-9][0-9]{9}" placeholder="Enter 10 digit Phone Number" required oninput="validatePhone()">
+                <small id="phone-message"></small>
+
+                <label>UPI ID for Rewards <span style="font-weight:400; color:#777;"></span></label>
+                <input type="text" name="upi_id" id="upi_id" placeholder="ex: yourname@oksbi / 9876543210@ybl" oninput="validateUPI()">
+                <small id="upi-message" style="color:#777;">Money from points will be sent to this UPI</small>
+                
+                <label>Ward Number</label>
+                <select name="ward_no" id="ward_no" required>
+                    <option value="">Select Ward</option>
+                    {% for w in wards %}<option value="{{ w['ward_no'] }}">Ward {{ w['ward_no'] }}</option>{% endfor %}         
+                </select>
+
+                <label>House Number</label>
+                <input type="text" name="house_no" placeholder="Enter House Number" required>
+                
+                <label>Upload Aadhaar Card</label>
+                <input type="file" name="aadhaar_photo" accept=".jpg,.jpeg,.png,.pdf" required>
+
+                <label>Pin Your House Location</label>
+                <div id="map"></div>
+                <input type="hidden" name="latitude" id="latitude" required>
+                <input type="hidden" name="longitude" id="longitude" required>
+                <button type="button" class="location-btn" id="locationBtn" onclick="currentLocation()">Use My Current Location</button>
+
+                <label>Password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="password" name="password" placeholder="Create Password" required>
+                    <i class="fa-solid fa-eye eye-icon" id="togglePassword" onclick="togglePass('password','togglePassword')"></i>
+                </div>
+                <small id="password-message"></small>
+
+                <label>Confirm Password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm Password" required>
+                    <i class="fa-solid fa-eye eye-icon" id="toggleConfirmPassword" onclick="togglePass('confirm_password','toggleConfirmPassword')"></i>
+                </div>
+                <small id="confirm-message"></small>
+
+                <button type="submit" id="submitBtn">Register</button>
+            </form>
+
+            <p class="login-link">Already have an account? <a href="/">Login</a></p>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+var map = L.map('map').setView([11.8745, 75.3704], 13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
+var marker;
+
+function setMapMarker(lat, lng) {
+    if (marker) { map.removeLayer(marker); }
+    marker = L.marker([lat, lng]).addTo(map);
+    document.getElementById("latitude").value = lat;
+    document.getElementById("longitude").value = lng;
+    map.setView([lat, lng], 16);
+    setTimeout(function(){ map.invalidateSize(); }, 300);
+}
+
+map.on('click', function(e) {
+    setMapMarker(e.latlng.lat, e.latlng.lng);
+});
+
+function currentLocation() {
+    var btn = document.getElementById("locationBtn");
+    var origText = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Fetching location...';
+    btn.disabled = true;
+
+    function handleSuccess(lat, lng) {
+        setMapMarker(lat, lng);
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Location Pinned!';
+        btn.disabled = false;
+        setTimeout(function(){ btn.innerHTML = origText; }, 2500);
+    }
+
+    function fallbackIP() {
+        // fallback if GPS blocked / HTTP
+        fetch('https://ipapi.co/json/')
+            .then(res => res.json())
+            .then(data => {
+                if(data && data.latitude && data.longitude){
+                    handleSuccess(data.latitude, data.longitude);
+                } else {
+                    throw new Error();
+                }
+            })
+            .catch(() => {
+                btn.innerHTML = origText;
+                btn.disabled = false;
+                alert("Could not fetch location. Please click on map to pin manually.");
+            });
+    }
+
+    if (!navigator.geolocation) {
+        fallbackIP();
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        function(pos){
+            handleSuccess(pos.coords.latitude, pos.coords.longitude);
+        },
+        function(err){
+            console.log("GPS error:", err.code, err.message);
+            // Don't show permission error directly, try IP fallback first
+            fallbackIP();
+        },
+        { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+    );
+}
+
+function validateUPI() {
+    let upi = document.getElementById("upi_id");
+    let msg = document.getElementById("upi-message");
+    if (upi.value.trim() === "" || /^.+\@.+$/.test(upi.value.trim())) {
+        msg.textContent = upi.value.trim() === "" ? "Money from points will be sent to this UPI" : "✓ Valid UPI";
+        msg.style.color = upi.value.trim() === "" ? "#777" : "green";
+        return true;
+    } else {
+        msg.textContent = "Enter valid UPI like name@bank";
+        msg.style.color = "red";
+        return false;
+    }
+}
+
+function togglePass(inputId, iconId) {
+    let input = document.getElementById(inputId);
+    let icon = document.getElementById(iconId);
+    if (input.type === "password") {
+        input.type = "text";
+        icon.classList.remove("fa-eye");
+        icon.classList.add("fa-eye-slash");
+    } else {
+        input.type = "password";
+        icon.classList.remove("fa-eye-slash");
+        icon.classList.add("fa-eye");
+    }
+}
+
+function validatePhone() {
+    let phone = document.getElementById("phone");
+    let msg = document.getElementById("phone-message");
+    phone.value = phone.value.replace(/[^0-9]/g, '');
+    if (phone.value.length === 0) { msg.textContent = ""; return false; }
+    if (phone.value.length !== 10) { msg.textContent = "Phone number must be exactly 10 digits"; msg.style.color = "red"; return false; }
+    if (!/^[6-9][0-9]{9}$/.test(phone.value)) { msg.textContent = "Enter valid number starting with 6-9"; msg.style.color = "red"; return false; }
+    msg.textContent = "✓ Valid"; msg.style.color = "green"; return true;
+}
+
+const passInput = document.getElementById("password");
+const passMsg = document.getElementById("password-message");
+passInput.addEventListener("input", function () {
+    const value = passInput.value;
+    const valid = value.length >= 8 && /[A-Z]/.test(value) && /[a-z]/.test(value) && /[0-9]/.test(value) && /[!@#$%^&*(),.?":{}|<>]/.test(value);
+    if (value.length === 0) { passMsg.textContent = ""; }
+    else if (valid) { passMsg.textContent = "✓ Strong password"; passMsg.style.color = "green"; }
+    else { passMsg.textContent = "Password must be 8+ chars with uppercase, lowercase, number and special char."; passMsg.style.color = "red"; }
+});
+
+const confirmInput = document.getElementById("confirm_password");
+const confirmMsg = document.getElementById("confirm-message");
+confirmInput.addEventListener("input", function() {
+    let pass = passInput.value;
+    if (this.value.length === 0) { confirmMsg.textContent = ""; }
+    else if (pass === this.value) { confirmMsg.textContent = "✓ Passwords match"; confirmMsg.style.color = "green"; }
+    else { confirmMsg.textContent = "Passwords do not match!"; confirmMsg.style.color = "red"; }
+});
+
+document.querySelector("form").addEventListener("submit", function(e) {
+    if (!validatePhone() || !validateUPI() || passMsg.style.color == "red" || confirmMsg.style.color == "red") {
+        e.preventDefault();
+        return;
+    }
+    if (document.getElementById("latitude").value == "" || document.getElementById("longitude").value == "") {
+        e.preventDefault();
+        alert("Please pin your house location on map");
+    }
+});
+</script>
+</body>
+</html>

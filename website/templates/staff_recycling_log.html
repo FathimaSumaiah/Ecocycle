@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>EcoCycle — Recycling Usage Log</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#F4F5F1;--panel:#FFFFFF;--panel-raised:#F8F9F6;--line:#E4E7E0;--text:#1E201D;--text-dim:#6B716A;--text-faint:#9AA096;--amber:#C17F1A;--amber-dim:#FEF3E0;--red:#B94E33;--red-dim:#FDECE8;--glass:#5A8A3A;--glass-dim:#EAF2E3;}
+  *{box-sizing:border-box;} body{margin:0;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;}
+  .wrap{max-width:1320px;margin:0 auto;padding:22px 26px 60px;}
+  header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px;background:var(--panel);border-radius:8px;padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);border:1px solid var(--line);}
+  .brand-block{display:flex;align-items:center;gap:14px;}
+  .brand-mark{width:42px;height:42px;border:2px solid var(--amber);border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:'Oswald';font-weight:700;font-size:15px;color:var(--amber);background:var(--amber-dim);}
+  .brand-text h1{font-family:'Oswald';font-weight:700;font-size:22px;margin:0;text-transform:uppercase;}
+  .brand-text .sub{font-family:'JetBrains Mono';font-size:11px;color:var(--text-faint);text-transform:uppercase;margin-top:2px;}
+  .shift-pill{display:inline-flex;align-items:center;gap:6px;background:var(--panel-raised);border:1px solid var(--line);border-radius:20px;padding:5px 12px;font-family:'JetBrains Mono';font-size:11px;color:var(--text-dim);text-decoration:none;font-weight:600;}
+  .shift-pill.active{background:var(--amber);color:#fff;border-color:var(--amber);}
+  .nav-bar{display:flex;gap:8px;margin-top:8px;justify-content:flex-end;flex-wrap:wrap;}
+  .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
+  @media(max-width:900px){.stats-grid{grid-template-columns:1fr;}}
+  .stat-card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.03);}
+  .stat-val{font-family:'Oswald';font-size:24px;font-weight:700;margin-top:4px;}
+  .stat-lab{font-family:'JetBrains Mono';font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.8px;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.04);}
+  .card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px;}
+  .card-head h2{font-family:'Oswald';font-size:16px;text-transform:uppercase;letter-spacing:1px;margin:0;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead th{text-align:left;font-family:'JetBrains Mono';font-size:10.5px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-faint);font-weight:500;padding:10px;border-bottom:1px solid var(--line);}
+  tbody td{padding:12px 10px;border-bottom:1px solid rgba(0,0,0,0.05);vertical-align:middle;}
+  .weight-cell{font-family:'JetBrains Mono';font-weight:700;color:var(--glass);}
+  .time-cell{font-family:'JetBrains Mono';color:var(--text-faint);font-size:12px;}
+  .search-input{padding:8px 14px; border:1px solid var(--line); border-radius:6px; font-size:13px; outline:none; width:260px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="brand-block">
+    <div class="brand-mark">EC</div>
+    <div class="brand-text">
+      <h1>Recycling Center</h1>
+      <div class="sub">Facility Dashboard · Raw Waste Used for Recycling</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <div style="text-align:right;">
+      <div style="font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:1px;">Logged in</div>
+      <div style="font-family:'JetBrains Mono';font-size:14px;margin-top:3px;">{{ staff_name }}</div>
+      <div style="display:flex; gap:6px; margin-top:6px; justify-content:flex-end; flex-wrap:wrap;">
+        <a href="/recycling_dashboard" style="text-decoration:none; background:#1A3C34; color:#fff; font-weight:700; border-radius:20px; padding:6px 14px; font-family:'JetBrains Mono'; font-size:11px;">🏠 Dashboard</a>
+        <a href="/staff/totalwastes" style="text-decoration:none; background:#1A3C34; color:#fff; font-weight:700; border-radius:20px; padding:6px 14px; font-family:'JetBrains Mono'; font-size:11px;">📦 Collection History</a>
+        <a href="/staff/recycling_log" style="text-decoration:none; background:#5A8A3A; color:#fff; font-weight:700; border-radius:20px; padding:6px 14px; font-family:'JetBrains Mono'; font-size:11px; box-shadow:0 0 0 2px #1E201D, 0 2px 8px rgba(0,0,0,0.3); border:1px solid #fff;">♻ Recycling Log</a>
+        <a href="/staff/sales" style="text-decoration:none; background:#C17F1A; color:#fff; font-weight:700; border-radius:20px; padding:6px 14px; font-family:'JetBrains Mono'; font-size:11px;">💰 Sales Log</a>
+        <a href="/all_disposals" style="text-decoration:none; background:#B94E33; color:#fff; font-weight:700; border-radius:20px; padding:6px 14px; font-family:'JetBrains Mono'; font-size:11px;">🗑 Disposal Log</a>
+      </div>
+    </div>
+    <a href="{{ url_for('staff_profile') }}" style="width:44px;height:44px;border-radius:50%;background:var(--panel-raised);border:2px solid var(--amber);display:grid;place-items:center;text-decoration:none;color:var(--amber);font-size:20px;">👤</a>
+  </div>
+</header>
+
+<div class="stats-grid">
+  <div class="stat-card" style="border-left:4px solid var(--glass);">
+    <div class="stat-lab">Today Used for Recycling</div>
+    <div class="stat-val" style="color:var(--glass);">{{ today_recycled_kg|int }} kg</div>
+  </div>
+  <div class="stat-card" style="border-left:4px solid var(--amber);">
+    <div class="stat-lab">Total Raw Waste Processed</div>
+    <div class="stat-val" style="color:var(--amber);">{{ "%.1f"|format(total_recycled_kg|float) }} kg</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-lab">Total Deduction Records</div>
+    <div class="stat-val">{{ total_cnt }} entries</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head">
+    <h2 style="color:var(--glass);">♻ Raw Waste Used for Recycling Log</h2>
+    <input type="text" id="searchInput" class="search-input" placeholder="Search category, staff..." onkeyup="filterTable()">
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Date & Time</th>
+        <th>Raw Waste Category</th>
+        <th>Quantity Deducted (KG)</th>
+        <th>Processing Staff</th>
+        <th>Usage Details</th>
+      </tr>
+    </thead>
+    <tbody id="logTableBody">
+      {% for l in logs %}
+      <tr data-search="{{ l['category_name']|lower }} {{ (l['staff_name'] or '')|lower }}">
+        <td class="time-cell">
+          {{ l['created_at'].strftime('%d %b %Y') if l['created_at'] else '' }}<br>
+          <small style="color:var(--text-faint);">{{ l['created_at'].strftime('%I:%M %p') if l['created_at'] else '' }}</small>
+        </td>
+        <td><b style="color:var(--glass);">{{ l['category_name'] }}</b></td>
+        <td class="weight-cell" style="font-size:14px;">
+          - {{ l['kg_used'] }} kg
+        </td>
+        <td style="color:var(--text-dim);">{{ l['staff_name'] }}</td>
+        <td style="font-family:'JetBrains Mono'; font-size:11px; color:var(--text-dim);">Deducted from raw waste stock (Used for Recycling/Processing)</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" style="text-align:center; padding:30px; color:var(--text-faint);">No recycling deduction logs recorded yet. Deduct raw waste from main dashboard.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+</div>
+<script>
+function filterTable(){
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  document.querySelectorAll('#logTableBody tr').forEach(r => {
+    const s = r.dataset.search || '';
+    r.style.display = (!q || s.includes(q)) ? '' : 'none';
+  });
+}
+</script>
+</body>
+</html>

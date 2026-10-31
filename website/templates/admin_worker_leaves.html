@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EcoCycle Admin - Worker Leaves</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_dashboard.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pending_households.css') }}" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+    .stat-card { background: #fff; border: 1px solid #E5E7EB; border-radius: 14px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+    .stat-value { font-family: 'Fraunces', serif; font-size: 26px; font-weight: 700; display: block; margin-bottom: 4px; }
+    .stat-value.red { color: #DC2626; }
+    .stat-value.orange { color: #D97706; }
+    .stat-value.blue { color: #2563EB; }
+    .stat-value.green { color: #059669; }
+    .stat-label { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Leave Form Card */
+    .leave-form-card { background: #fff; border: 1px solid #E5E7EB; border-radius: 14px; padding: 22px; margin-bottom: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
+    .card-head-title { font-family: 'Fraunces', serif; font-size: 18px; color: #111827; margin: 0 0 16px; display: flex; align-items: center; justify-content: space-between; }
+    
+    .form-grid-3 { display: grid; grid-template-columns: 1.5fr 1fr 1.5fr; gap: 14px; margin-bottom: 16px; }
+    @media(max-width:900px){ .form-grid-3 { grid-template-columns: 1fr; } }
+
+    .form-group label { display: block; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; color: #4B5563; text-transform: uppercase; margin-bottom: 6px; }
+    .form-control { width: 100%; padding: 10px 14px; border: 1.5px solid #E5E7EB; border-radius: 10px; font-family: 'Inter', sans-serif; font-size: 13px; outline: none; transition: border-color 0.2s; background: #fff; }
+    .form-control:focus { border-color: #1A3C34; }
+
+    .btn-submit-leave { background: linear-gradient(135deg, #1A3C34 0%, #2A6B5E 100%); color: #fff; border: none; border-radius: 10px; padding: 12px 20px; font-family: 'Inter', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; transition: transform 0.15s ease; }
+    .btn-submit-leave:hover { transform: translateY(-1px); }
+
+    /* Table Styling */
+    .table-wrap { overflow-x: auto; background: #fff; border: 1px solid #E5E7EB; border-radius: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th { background: #F9FAFB; font-family: 'JetBrains Mono', monospace; font-size: 11px; text-transform: uppercase; color: #4B5563; padding: 14px 18px; border-bottom: 1px solid #E5E7EB; }
+    td { padding: 14px 18px; font-size: 13px; color: #111827; border-bottom: 1px solid #F3F4F6; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+
+    .btn-delete-leave { background: #FEE2E2; color: #DC2626; border: 1px solid #FCA5A5; padding: 5px 12px; border-radius: 6px; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 12px; text-decoration: none; display: inline-block; }
+    .btn-delete-leave:hover { background: #DC2626; color: #fff; }
+
+    .btn-accept-leave { background: #DCFCE7; color: #166534; border: 1px solid #86EFAC; padding: 5px 12px; border-radius: 6px; font-family: 'Inter', sans-serif; font-weight: 700; font-size: 12px; text-decoration: none; display: inline-block; }
+    .btn-accept-leave:hover { background: #166534; color: #fff; }
+
+    .btn-notify-leave { background: #DBEAFE; color: #1E40AF; border: 1px solid #93C5FD; padding: 5px 12px; border-radius: 6px; font-family: 'Inter', sans-serif; font-weight: 700; font-size: 12px; text-decoration: none; display: inline-block; }
+    .btn-notify-leave:hover { background: #1E40AF; color: #fff; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon">EC</div><span>EcoCycle Admin</span></div>
+    <nav class="sidebar-nav">
+      <p class="nav-section">OVERVIEW</p>
+      <a href="{{ url_for('admin_dashboard') }}" class="nav-item">Dashboard</a>
+      <a href="{{ url_for('admin_todays_requests') }}" class="nav-item">📋 Today's Requests</a>
+      <a href="/admin/collhistory" class="nav-item" style="color: inherit; text-decoration: none;">📦 Collection History</a>
+
+      <p class="nav-section">HOUSEHOLDS</p>
+      <a href="{{ url_for('pending_households') }}" class="nav-item"><span>Pending Approvals</span><span class="badge">{{ pending_count }}</span></a>
+      <a href="{{ url_for('view_households') }}" class="nav-item">All Households</a>
+      <a href="{{ url_for('admin_feedbacks') }}" class="nav-item">Feedbacks & Complaints 💬</a>
+      <p class="nav-section">WORKFORCE</p>
+      <a href="{{ url_for('view_workers') }}" class="nav-item">Collection Workers</a>
+      <a href="{{ url_for('add_worker') }}" class="nav-item">Add Worker</a>
+      <a href="/admin/worker_leaves" class="nav-item active">📅 Worker Leaves ({{ today_leaves_count }})</a>
+      <a href="{{ url_for('view_staff') }}" class="nav-item">Recycling Staff</a>
+      <a href="{{ url_for('add_staff') }}" class="nav-item">Add Staff</a>
+      <p class="nav-section">CONFIGURATION</p>
+      <a href="{{ url_for('add_area') }}" class="nav-item">Wards & Areas</a>
+      <a href="{{ url_for('wastes_rewards') }}" class="nav-item">Waste Categories</a>
+      <a href="{{ url_for('recycled_products') }}" class="nav-item">Recycled Products</a>
+      <p class="nav-section">REVENUE</p>
+      <a href="/admin/viewinventory" class="nav-item">Inventory</a>
+      <a href="{{ url_for('admin_viewsales') }}" class="nav-item">Sales Log</a>
+      <p class="nav-section">REWARDS</p>
+      <a href="{{ url_for('admin_rewards_redeem') }}" class="nav-item">Redeem Requests</a>
+    </nav>
+  </aside>
+
+  <!-- Main Area -->
+  <main class="main">
+    <!-- Flash Toast Notifications -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for cat, msg in messages %}
+          <div style="background:{% if cat=='success' %}#10B981{% else %}#EF4444{% endif %}; color:#fff; padding:12px 18px; border-radius:10px; margin-bottom:18px; font-weight:600; font-size:13px; font-family:'Inter';">
+            {{ msg }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+   
+
+    <!-- Stat Counter Cards -->
+    <section class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-value red">{{ today_leaves_count }}</span>
+        <span class="stat-label">On Leave Today</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value orange">{{ total_leaves_count }}</span>
+        <span class="stat-label">Total Leave Logs</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value blue">{{ total_workers }}</span>
+        <span class="stat-label">Total Active Workers</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value green">Active</span>
+        <span class="stat-label">Auto-Reassign Status</span>
+      </div>
+    </section>
+
+  
+    
+
+    <!-- Toolbar: Search & Ward Filter -->
+    <div class="toolbar" style="margin-bottom:18px;">
+      <div class="search-box">
+        <span>🔍</span>
+        <input type="text" id="searchInput" placeholder="Search leave logs by worker, ward, area, reason..." onkeyup="filterLeaves()">
+      </div>
+      <div class="filters">
+        <select class="select" id="wardFilter" onchange="filterLeaves()">
+          <option value="all">All Wards</option>
+          {% set wards = [] %}
+          {% for l in leaves %}
+            {% if l['ward_no'] not in wards %}
+              {% set _ = wards.append(l['ward_no']) %}
+              <option value="{{ l['ward_no'] }}">Ward {{ l['ward_no'] }}</option>
+            {% endif %}
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <!-- Leave Records Table -->
+    <section class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>LEAVE DATE</th>
+            <th>WORKER NAME</th>
+            <th>WARD & AREA</th>
+            <th>PHONE</th>
+            <th>REASON</th>
+            <th>STATUS</th>
+            <th>NOTIFIED HOUSES</th>
+            <th>ACTION</th>
+          </tr>
+        </thead>
+        <tbody id="leaveTableBody">
+          {% for l in leaves %}
+          <tr data-ward="{{ l['ward_no'] }}" data-search="{{ l['full_name']|lower }} {{ l['area']|lower }} {{ (l['reason'] or '')|lower }}">
+            <td style="font-family:'JetBrains Mono'; font-weight:700;">{{ l['leave_date'] }}</td>
+            <td style="font-weight:700;">{{ l['full_name'] }}</td>
+            <td><span class="ward-pill">Ward {{ l['ward_no'] }}</span> {{ l['area'] }}</td>
+            <td style="font-family:'JetBrains Mono'; font-size:12px;">{{ l['phone'] }}</td>
+            <td>{{ l['reason'] if l['reason'] else 'On Leave' }}</td>
+            <td>
+              {% if l['status'] == 'Accepted' or l['status'] == 'Approved' %}
+                <span style="background:#D1FAE5; color:#065F46; padding:4px 10px; border-radius:20px; font-family:'JetBrains Mono'; font-size:11px; font-weight:700;">✓ Accepted</span>
+              {% elif l['status'] == 'Rejected' %}
+                <span style="background:#FEE2E2; color:#991B1B; padding:4px 10px; border-radius:20px; font-family:'JetBrains Mono'; font-size:11px; font-weight:700;">✗ Rejected</span>
+              {% else %}
+                <span style="background:#FEF3C7; color:#92400E; padding:4px 10px; border-radius:20px; font-family:'JetBrains Mono'; font-size:11px; font-weight:700;">⏳ Pending</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if l['notified_count'] and l['notified_count'] > 0 or l['notified'] == 1 %}
+                <span style="background:#E0E7FF; color:#3730A3; padding:4px 10px; border-radius:20px; font-family:'JetBrains Mono'; font-size:11px; font-weight:700;">
+                  📢 {{ l['notified_count'] or 0 }} Notified
+                </span>
+              {% else %}
+                <span style="color:#9CA3AF; font-size:12px; font-family:'JetBrains Mono';">Not Sent</span>
+              {% endif %}
+            </td>
+            <td>
+              <div style="display:flex; gap:6px; align-items:center;">
+                {% if l['status'] == 'Pending' %}
+                  <a href="/admin/accept_leave/{{ l['id'] }}" class="btn-accept-leave" onclick="return confirm('Accept leave request for {{ l['full_name'] }}?')">Accept</a>
+                {% elif (l['status'] == 'Accepted' or l['status'] == 'Approved') and (not l['notified'] or l['notified'] == 0) and (not l['notified_count'] or l['notified_count'] == 0) %}
+                  <a href="/admin/notify_leave/{{ l['id'] }}" class="btn-notify-leave" onclick="return confirm('Notify households and reassign pickups for {{ l['full_name'] }}?')">📢 Notify</a>
+                {% endif %}
+                <a href="/admin/delete_leave/{{ l['id'] }}" class="btn-delete-leave" onclick="return confirm('Remove leave entry for {{ l['full_name'] }}?')">Remove</a>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="8" style="text-align:center; padding:40px; color:#6B7280;">
+              <div style="font-size:36px; margin-bottom:8px;">📅</div>
+              <h4 style="font-family:'Fraunces'; margin-bottom:4px;">No Worker Leaves Recorded</h4>
+              <p style="font-family:'JetBrains Mono'; font-size:12px;">Worker leave requests will be listed here for Admin action.</p>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </main>
+</div>
+
+<script>
+function toggleMenu(){
+  const menu = document.getElementById('userMenu');
+  if(menu) menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+}
+
+window.addEventListener('click', function(e){
+  if(!e.target.closest('.user-chip-wrapper')){
+    const menu = document.getElementById('userMenu');
+    if(menu) menu.style.display = 'none';
+  }
+});
+
+function filterLeaves() {
+  const query = document.getElementById('searchInput').value.toLowerCase().trim();
+  const ward = document.getElementById('wardFilter').value;
+  const rows = document.querySelectorAll('#leaveTableBody tr');
+
+  rows.forEach(row => {
+    const rWard = row.dataset.ward;
+    const rSearch = row.dataset.search || '';
+
+    const matchesWard = (ward === 'all' || rWard === ward);
+    const matchesQuery = (!query || rSearch.includes(query));
+
+    if (matchesWard && matchesQuery) {
+      row.style.display = '';
+    } else {
+      row.style.display = 'none';
+    }
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EcoCycle - My Home</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/household_dashboard.css') }}" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="household-app">
+  <header class="h-header">
+    <div class="h-logo">
+      <img src="{{ url_for('static', filename='images/eco_cycle_logo.webp') }}" alt="EcoCycle Logo" style="width:36px; height:36px; border-radius:10px; object-fit:contain; background:#fff; padding:3px;">
+      EcoCycle <small>Household</small>
+    </div>
+    <div class="h-nav">
+      <a href="/household_dashboard" class="active">Home</a>
+      <a href="/rewards">Rewards</a>
+      <a href="/household/feedback" class="menu-btn">Feedbacks</a>
+    </div>
+      <div class="h-profile">
+      <div class="points-pill">🌿 {{ household['reward_wallet'] }} pts</div>
+      <a href="{{ url_for('household_profile') }}" class="nav-item" style="color: inherit; text-decoration: none;">
+      <div class="avatar-circle">{{ household['full_name'][:2]|upper }}</div></a>
+    </div>
+  </header>
+
+  <main class="h-main">
+    <section class="welcome">
+{% if notifications %}
+<section class="card" style="background:#FFF3CD; border:1px solid #FFE69C; margin-bottom:18px;">
+  <div class="card-head">
+    <h2 style="color:#856404;">📢 Notifications {% if today_notif>0 %}<span style="background:#B8503F;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;margin-left:8px;">{{ today_notif }} NEW TODAY</span>{% endif %}</h2>
+    <a href="#" onclick="document.getElementById('notifBox').style.display=document.getElementById('notifBox').style.display=='none'?'block':'none'; return false;" style="font-size:12px; font-weight:700; color:#856404; text-decoration:none; background:#fff; padding:6px 12px; border-radius:20px; border:1px solid #FFE69C;">View All ({{ notifications|length }})</a>
+  </div>
+  <div id="notifBox">
+    {% for n in notifications %}
+    <div style="background:#fff; padding:12px 14px; border-radius:10px; margin-bottom:8px; border-left:4px solid {% if 'On Leave' in n.title %}#B8503F{% else %}#3D5A80{% endif %};">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <b style="font-size:13px; color:{% if 'On Leave' in n.title %}#B8503F{% else %}#26241E{% endif %};">{{ n.title }}</b>
+        <span style="font-size:11px; color:#999;">{{ n.created_at.strftime('%d %b %I:%M %p') if n.created_at else '' }}</span>
+      </div>
+      <p style="font-size:12.5px; color:#555; margin:6px 0 0 0;">{{ n.message }}</p>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+      <div>
+        <h1>Hi, {{ household['full_name'] }} 👋</h1>
+        <p class="mono">House No: {{ household['house_no'] }} · Ward: {{ household['ward_no'] }} · Area: {{ household['area'] }}</p>
+      </div>
+      <div class="welcome-card">
+        <div class="level-badge">Approved Household</div>
+        <div class="rank">Ward {{ household['ward_no'] }}</div>
+      </div>
+    </section>
+
+    <section class="stats-grid">
+      <div class="stat-card green"><span class="stat-icon">♻</span><span class="stat-value" id="completedStat">{{ completed_count }}</span><span class="stat-label">Completed Pickups</span></div>
+      <div class="stat-card cream"><span class="stat-icon">⭐</span><span class="stat-value">{{ household['reward_wallet'] }}</span><span class="stat-label">Eco Points</span></div>
+      <div class="stat-card white"><span class="stat-icon">⚖</span><span class="stat-value">3kg Min</span><span class="stat-label">Min for Pickup</span></div>
+      <div class="stat-card dark"><span class="stat-icon">👷</span><span class="stat-value" style="font-size:15px;">{% if assigned_worker %}{{ assigned_worker['full_name'] }}{% else %}Not Assigned{% endif %}</span><span class="stat-label">{% if assigned_worker %}Your Worker · {{ assigned_worker['phone'] }}{% else %}Your Worker · -{% endif %}</span></div>
+    </section>
+
+    <section class="card rules-card">
+      <div class="card-head">
+        <h2>♻ Waste Segregation Rules - Mandatory</h2>
+        <span class="time-badge" id="timeBadge">Request Time: 8:00 AM - 4:00 PM</span>
+      </div>
+
+      <div class="rules-grid">
+        {% for cat in categories %}
+          {% set low = cat.category_name|lower %}
+          {% if 'organic' in low %}
+            {% set bin = 'organic' %}{% set emoji = '🍂' %}
+          {% elif 'plastic' in low %}
+            {% set bin = 'plastic' %}{% set emoji = '🧴' %}
+          {% elif 'paper' in low %}
+            {% set bin = 'paper' %}{% set emoji = '📰' %}
+          {% elif 'metal' in low %}
+            {% set bin = 'metal' %}{% set emoji = '🔩' %}
+          {% elif 'glass' in low %}
+            {% set bin = 'glass' %}{% set emoji = '🍾' %}
+          {% elif 'e-waste' in low or 'ewaste' in low %}
+            {% set bin = 'ewaste' %}{% set emoji = '🔋' %}
+          {% elif 'textile' in low or 'cloth' in low %}
+            {% set bin = 'textile' %}{% set emoji = '👕' %}
+          {% elif 'disposal' in low %}
+            {% set bin = 'disposal' %}{% set emoji = '🗑' %}
+          {% else %}
+            {% set bin = 'default' %}{% set emoji = '♻' %}
+          {% endif %}
+          <div class="rule-item {{ bin }}">
+            <div class="rule-icon">{{ emoji }}</div>
+            <h3>{{ cat.category_name }}</h3>
+            <span class="points-badge-demo">{{ cat.points_per_kg }} pts/kg</span>
+            <ul>
+              <li>Segregate {{ cat.category_name }} properly</li>
+              <li>Keep it clean & dry</li>
+              <li>Use separate bin</li>
+            </ul>
+            <span class="do-dont">DO: Properly segregated</span>
+          </div>
+        {% else %}
+          <div style="grid-column:1/-1; text-align:center; padding:30px; color:#7A8A83;">No categories added by admin yet.</div>
+        {% endfor %}
+      </div>
+
+      <div class="rules-footer">
+        <div class="min-weight-box">
+          <div class="weight-icon">⚖</div>
+          <div><h4>Minimum 3kg Waste Required for Pickup</h4></div>
+          <span class="weight-badge">3KG MIN</span>
+        </div>
+        <div class="alert-box">⚠ <b>Mixed waste will be REJECTED</b> - No points. Segregate all types properly.</div>
+        <div class="request-time-box">
+          <div>
+            <h4>🕒 Pickup Request (8 AM - 4 PM) {% if festive_mode %}<span style="background:#FF6B35; color:#fff; font-size:11px; padding:2px 8px; border-radius:12px; font-weight:700;">🎉 Festive Mode Active</span>{% endif %}</h4>
+            <p class="mono-small">Request only between <b>8:00 AM to 4:00 PM</b>. After 4 PM goes to next day. Min 3kg required. {% if festive_mode %}Worker capacity expanded to <b>35 houses/day</b>.{% endif %}</p>
+          </div>
+          <button class="btn-request" id="requestBtn" onclick="requestPickup()">REQUEST PICKUP</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="two-col">
+      <div class="left-col">
+        <section class="card">
+          <div class="card-head"><h2>Pending Pickup Status</h2><span class="pill-count">{{ '1 Active' if pickup_status in ['Pending','Assigned'] else '0 Active' }}</span></div>
+          <div id="pendingBox" class="pending-box">
+            {% if pickup_status in ['Pending','Assigned'] and active_pickup %}
+            <div style="padding:16px; background:#F0FAF3; border:1px solid #2A6B5E; border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
+              <div><div style="font-weight:800;">Pickup #{{ active_pickup.id }} - {{ active_pickup.status }}</div><div style="font-size:12px; color:#666; margin-top:4px;">{{ active_pickup.created_at }}</div></div>
+              <button onclick="cancelPickup()" style="background:#C94A3A; color:white; border:none; padding:8px 16px; border-radius:8px; font-weight:700; cursor:pointer;">CANCEL</button>
+            </div>
+            {% else %}
+            <div class="pending-empty"><div class="empty-icon">📦</div><h4>No active pickup request</h4><p class="mono-small">Request pickup - status will show here.</p></div>
+            {% endif %}
+          </div>
+        </section>
+        <section class="card">
+          <div class="card-head"><h2>Pickup Schedule</h2><span class="link">Ward {{ household['ward_no'] }} calendar</span></div>
+          <div class="schedule-grid">
+            <div class="day-card active"><div class="day">Mon - Sat</div><div class="type">On Request</div><div class="time mono">8 AM - 4 PM</div></div>
+            <div class="day-card"><div class="day">Sunday</div><div class="type">No Pickup</div><div class="time mono">Holiday</div></div>
+          </div>
+        </section>
+      </div>
+      <div class="right-col">
+        <section class="card impact-card">
+          <h2>Your Impact</h2>
+          <div class="impact-row"><span>✅ Completed Pickups</span><b id="completedCount">{{ completed_count }}</b></div>
+          <div class="impact-row"><span>🌍 CO₂ Saved</span><b>{{ co2_saved }} kg</b></div>
+          <div class="impact-row"><span>🌳 Trees equivalent</span><b>{{ trees_eq }}</b></div>
+          <div class="impact-row"><span>♻ Total Waste Recycled</span><b>{{ total_weight }} kg</b></div>
+          <div class="impact-bar"><div class="fill" style="width: {{ progress_pct }}%"></div></div>
+          <p class="mono-small">{{ completed_count }} pickups completed till now.</p>
+          <div class="eco-tip" style="margin-top:16px; border-radius:10px;"><b>💡 Tip:</b> Go to <a href="/rewards" style="color:#2A6B5E;">Rewards Page</a> to redeem {{ household['reward_wallet'] }} pts.</div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+<div id="toast" class="toast"></div>
+<script>
+  window.FESTIVE_MODE = {{ festive_mode|default(0) }};
+</script>
+<script src="{{ url_for('static', filename='js/household_dashboard.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>EcoCycle — Recycling Center Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root{--bg:#F4F5F1;--panel:#FFFFFF;--panel-raised:#F8F9F6;--line:#E4E7E0;--text:#1E201D;--text-dim:#6B716A;--text-faint:#9AA096;--amber:#C17F1A;--amber-dim:#FEF3E0;--red:#B94E33;--red-dim:#FDECE8;--glass:#5A8A3A;--glass-dim:#EAF2E3;}
+  *{box-sizing:border-box;} body{margin:0;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;}
+ .wrap{max-width:1320px;margin:0 auto;padding:22px 26px 60px;}
+  header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px;background:var(--panel);border-radius:8px;padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);border:1px solid var(--line);}
+ .brand-block{display:flex;align-items:center;gap:14px;}
+ .brand-mark{width:42px;height:42px;border:2px solid var(--amber);border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:'Oswald';font-weight:700;font-size:15px;color:var(--amber);background:var(--amber-dim);}
+ .brand-text h1{font-family:'Oswald';font-weight:700;font-size:22px;margin:0;text-transform:uppercase;}
+ .brand-text.sub{font-family:'JetBrains Mono';font-size:11px;color:var(--text-faint);text-transform:uppercase;margin-top:2px;}
+ .shift-pill{display:inline-flex;align-items:center;gap:6px;margin-top:8px;background:var(--panel-raised);border:1px solid var(--line);border-radius:20px;padding:5px 12px;font-family:'JetBrains Mono';font-size:11px;color:var(--text-dim);}
+ .grid{display:grid;grid-template-columns:1.25fr 0.95fr;gap:20px;margin-top:20px;align-items:start;}
+  @media(max-width:980px){.grid{grid-template-columns:1fr;}}
+ .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.04);}
+ .card-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;}
+ .card-head h2{font-family:'Oswald';font-size:14px;text-transform:uppercase;letter-spacing:1.2px;margin:0;}
+ .card-head.hint{font-size:11px;color:var(--text-faint);font-family:'JetBrains Mono';}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead th{text-align:left;font-family:'JetBrains Mono';font-size:10.5px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-faint);font-weight:500;padding:0 10px 10px;border-bottom:1px solid var(--line);}
+  tbody td{padding:12px 10px;border-bottom:1px solid rgba(0,0,0,0.05);}
+ .weight-cell{font-family:'JetBrains Mono';font-weight:700;}
+ .worker-cell{color:var(--text-dim);font-size:12.5px;}
+ .time-cell{font-family:'JetBrains Mono';color:var(--text-faint);font-size:12px;}
+ .badge{font-family:'JetBrains Mono';font-size:10px;padding:3px 8px;border-radius:10px;font-weight:700;}
+ .badge-low{background:var(--red-dim);color:var(--red);border:1px solid #E8B0A3;}
+ .badge-ok{background:var(--glass-dim);color:var(--glass);border:1px solid #B9D0A8;}
+ .badge-empty{background:#F0F1EE;color:var(--text-faint);border:1px solid var(--line);}
+ .form-label{font-size:10px;color:var(--text-faint);font-family:'JetBrains Mono';text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;display:block;}
+ .form-input,.form-select{width:100%;padding:9px 10px;background:#fff;color:var(--text);border:1px solid var(--line);border-radius:6px;font-size:13px;outline:none;}
+ .form-row{display:flex;gap:10px;}.form-row>div{flex:1;}
+ .required:after{content:" *";color:var(--red);}
+ .action-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--panel-raised);border:1px solid var(--line);border-radius:6px;padding:12px 14px;color:var(--text);font-size:13.5px;font-weight:600;cursor:pointer;}
+ .rev-box{background:var(--panel-raised);border:1px solid var(--line);border-radius:6px;padding:12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+ .view-all-btn{font-family:'JetBrains Mono';font-size:11px;padding:6px 12px;border:1px solid var(--line);background:var(--panel-raised);border-radius:20px;text-decoration:none;color:var(--text);font-weight:600;}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="brand-block"><div class="brand-mark">EC</div><div class="brand-text"><h1>Recycling Center</h1><div class="sub">Facility Dashboard · Thikkodi Panchayat Sorting Unit</div></div></div>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <div style="text-align:right;">
+      <div style="font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:1px;">Logged in</div>
+      <div style="font-family:'JetBrains Mono';font-size:14px;margin-top:3px;">{{ staff_name }}</div>
+      <div class="shift-pill">Today: ₹{{ revenue_today|int }} | All Staffs: ₹{{ all_staffs_revenue|int }}</div>
+      <div style="display:flex; gap:6px; margin-top:6px; justify-content:flex-end; flex-wrap:wrap;">
+        <a href="/recycling_dashboard" style="text-decoration:none; background:#1A3C34; color:#fff; font-weight:700; border-radius:20px; padding:6px 14px; font-family:'JetBrains Mono'; font-size:11px; box-shadow:0 0 0 2px #1E201D, 0 2px 8px rgba(0,0,0,0.3); border:1px solid #fff;">🏠 Dashboard</a>
+        <a href="/staff/totalwastes" style="text-decoration:none; background:#1A3C34; color:#fff; font-weight:700; border-radius:20px; padding:6px 14px; font-family:'JetBrains Mono'; font-size:11px;">📦 Collection History</a>
+        <a href="/staff/recycling_log" style="text-decoration:none; background:#5A8A3A; color:#fff; font-weight:700; border-radius:20px; padding:6px 14px; font-family:'JetBrains Mono'; font-size:11px;">♻ Recycling Log</a>
+        <a href="/staff/sales" style="text-decoration:none; background:#C17F1A; color:#fff; font-weight:700; border-radius:20px; padding:6px 14px; font-family:'JetBrains Mono'; font-size:11px;">💰 Sales Log</a>
+        <a href="/all_disposals" style="text-decoration:none; background:#B94E33; color:#fff; font-weight:700; border-radius:20px; padding:6px 14px; font-family:'JetBrains Mono'; font-size:11px;">🗑 Disposal Log</a>
+      </div>
+    </div>
+    <a href="{{ url_for('staff_profile') }}" style="width:44px;height:44px;border-radius:50%;background:var(--panel-raised);border:2px solid var(--amber);display:grid;place-items:center;text-decoration:none;color:var(--amber);font-size:20px;">👤</a>
+  </div>
+</header>
+
+{% with messages = get_flashed_messages() %}{% if messages %}{% for m in messages %}<div style="position:fixed;top:20px;right:20px;background:#1A3C34;color:#fff;padding:12px 18px;border-radius:8px;z-index:9999;">{{ m }}</div>{% endfor %}{% endif %}{% endwith %}
+
+<div class="grid">
+  <!-- Left Column -->
+  <div>
+    <div class="card" style="border-left:3px solid var(--amber);">
+      <div class="card-head"><h2 style="color:var(--amber);">Today at a Glance</h2><span class="hint">{{ today_date }}</span></div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;">
+        <div style="background:var(--panel-raised);padding:12px;border-radius:6px;text-align:center;border:1px solid var(--line);"><div style="font-family:'JetBrains Mono';font-size:18px;font-weight:700;">{{ total_today|int }} kg</div><div style="font-size:10px;color:var(--text-faint);margin-top:4px;">INCOMING</div></div>
+        <div style="background:var(--panel-raised);padding:12px;border-radius:6px;text-align:center;border:1px solid var(--line);"><div style="font-family:'JetBrains Mono';font-size:18px;font-weight:700;color:var(--red);">{{ disposed_today|int }} kg</div><div style="font-size:10px;color:var(--text-faint);margin-top:4px;">DISPOSED</div></div>
+        <div style="background:var(--panel-raised);padding:12px;border-radius:6px;text-align:center;border:1px solid var(--line);"><div style="font-family:'JetBrains Mono';font-size:18px;font-weight:700;">{{ sold_today|int }} kg</div><div style="font-size:10px;color:var(--text-faint);margin-top:4px;">SOLD TODAY</div></div>
+        <div style="background:var(--amber-dim);padding:12px;border-radius:6px;text-align:center;border:1px solid var(--amber);"><div style="font-family:'JetBrains Mono';font-size:18px;font-weight:700;color:var(--amber);">₹{{ revenue_today|int }}</div><div style="font-size:10px;color:var(--text-faint);margin-top:4px;">REVENUE TODAY</div></div>
+        <div style="background:#1E201D;padding:12px;border-radius:6px;text-align:center;border:1px solid #1E201D;"><div style="font-family:'JetBrains Mono';font-size:18px;font-weight:700;color:#fff;">₹{{ all_staffs_revenue|int }}</div><div style="font-size:10px;color:#9AA096;margin-top:4px;">TOTAL REVENUE</div></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px; border-left:4px solid var(--glass);">
+      <div class="card-head">
+        <h2 style="color:var(--glass);">♻ Collected Raw Waste Stock</h2>
+        <span class="hint">Use −Minus to deduct when recycling or disposing</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Waste Category</th>
+            <th>Total Collected</th>
+            <th>Recycled / Used</th>
+            <th>Disposed</th>
+            <th>Available Stock</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cat in raw_waste_stock %}
+          <tr>
+            <td><b>{{ cat['category_name'] }}</b></td>
+            <td class="worker-cell">{{ cat['total_collected_kg'] }} kg</td>
+            <td class="worker-cell" style="color:var(--amber);">{{ cat['recycled_kg'] }} kg</td>
+            <td class="worker-cell" style="color:var(--red);">{{ cat['disposed_kg'] }} kg</td>
+            <td class="weight-cell" style="color:{% if cat['current_stock_kg'] > 0 %}var(--glass){% else %}var(--text-faint){% endif %}; font-size:14px;">
+              <b>{{ cat['current_stock_kg'] }} kg</b>
+            </td>
+            <td>
+              <button type="button" onclick="openMinusModal({{ cat['category_id'] }}, '{{ cat['category_name'] }}', {{ cat['current_stock_kg'] }})" style="background:#B94E33; color:#fff; border:none; padding:5px 12px; border-radius:6px; font-weight:700; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">− Minus</button>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-faint);">No raw waste stock recorded yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+      <div class="card-head">
+        <h2>Finished Goods Inventory — Recycled Products</h2>
+        <span class="hint">{{ inventory|length }} types • {{ "%.1f"|format(total_stock_kg) }} kg + {{ total_stock_count }} pcs • Sell from here</span>
+      </div>
+      <table>
+        <thead>
+          <tr><th>Recycled Product</th><th>Category</th><th>Stock</th><th>Rate</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          {% for item in inventory %}
+          {% set kg = item['stock_kg']|float %}{% set cnt = item['stock_count']|int %}
+          {% if kg < 1 and cnt < 1 %}{% set status='EMPTY' %}{% elif item['unit']=='kg' %}{% if kg>=1 and kg<=10 %}{% set status='LOW' %}{% elif kg>10 %}{% set status='OK' %}{% else %}{% set status='EMPTY' %}{% endif %}{% else %}{% if cnt>=1 and cnt<=20 %}{% set status='LOW' %}{% elif cnt>20 %}{% set status='OK' %}{% else %}{% if kg>=1 and kg<=10 %}{% set status='LOW' %}{% elif kg>10 %}{% set status='OK' %}{% else %}{% set status='EMPTY' %}{% endif %}{% endif %}{% endif %}
+          <tr style="{% if status=='LOW' %}background:var(--red-dim);{% endif %}">
+            <td><b>{{ item['recycled_name'] }}</b></td>
+            <td class="worker-cell">{{ item['category_name'] }}</td>
+            <td class="weight-cell" style="{% if status=='EMPTY' %}color:var(--text-faint);{% elif status=='LOW' %}color:var(--red);{% endif %}">{% if item['unit']=='kg' %}{{ "%.2f"|format(kg) }} kg{% else %}{{ cnt }} {{ item['unit'] }}{% endif %}</td>
+            <td class="time-cell">₹{{ item['resale_price_per_kg'] }}/{{ item['unit'] }}</td>
+            <td>{% if status=='EMPTY' %}<span class="badge badge-empty">EMPTY</span>{% elif status=='LOW' %}<span class="badge badge-low">LOW</span>{% else %}<span class="badge badge-ok">OK</span>{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+      <div class="card-head"><h2>Incoming Today</h2><span class="hint">{{ total_today }} kg received today</span></div>
+      <table>
+        <thead><tr><th>Date & Time</th><th>Material</th><th>Weight</th><th>From Worker</th><th>Area</th></tr></thead>
+        <tbody>
+          {% for row in incoming %}
+          <tr>
+            <td class="time-cell">{{ row['created_at'].strftime('%d %b %Y %I:%M %p') if row['created_at'] else '' }}</td>
+            <td>{{ row['category_name'] }}</td>
+            <td class="weight-cell">{{ row['weight_kg'] }} kg</td>
+            <td class="worker-cell">{{ row['full_name'] }}</td>
+            <td class="worker-cell">{{ row['area'] }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-faint);">No incoming waste received today</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Right Column -->
+  <div>
+    <!-- Chart 1: Raw Waste Stock Distribution -->
+    <div class="card" style="border-left:4px solid var(--amber);">
+      <div class="card-head">
+        <h2 style="color:var(--amber);">📊 Raw Waste Stock Distribution</h2>
+        <span class="hint">Raw Material by Category (KG)</span>
+      </div>
+      <div style="height:220px; position:relative; padding:5px;">
+        <canvas id="rawWastePieChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Chart 2: Finished Recycled Goods Inventory -->
+    <div class="card" style="margin-top:20px; border-left:4px solid var(--glass);">
+      <div class="card-head">
+        <h2 style="color:var(--glass);">📊 Finished Goods Inventory</h2>
+        <span class="hint">Recycled Products Stock</span>
+      </div>
+      <div style="height:220px; position:relative; padding:5px;">
+        <canvas id="recycledInventoryPieChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Add Stock to Inventory Card -->
+    <div class="card" style="margin-top:20px; border-left:4px solid var(--glass);">
+      <div class="card-head">
+        <h2 style="color:var(--glass);">➕ Add Finished Goods to Inventory</h2>
+        <span class="hint">After recycling raw waste → add finished products here</span>
+      </div>
+      <form method="POST" action="/add_to_inventory" onsubmit="return validateAddToInventory()">
+        <div style="margin-bottom:12px;">
+          <label class="form-label required">Select Recycled Product</label>
+          <select name="recycled_id" id="addProduct" class="form-select" onchange="handleAddUnit()" required>
+            <option value="">Select product to add...</option>
+            {% for item in inventory %}
+            <option value="{{ item['recycled_id'] }}" data-unit="{{ item['unit'] }}">{{ item['recycled_name'] }} ({{ item['category_name'] }})</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div id="addKgGroup" style="margin-bottom:12px; display:block;">
+          <label class="form-label required">Usable Weight (KG)</label>
+          <input type="number" step="0.01" min="0.01" name="usable_kg" id="addKg" class="form-input" placeholder="e.g. 25.0">
+        </div>
+
+        <div id="addCountGroup" style="margin-bottom:12px; display:none;">
+          <label class="form-label required">Usable Quantity (Count / Pcs)</label>
+          <input type="number" min="1" name="usable_count" id="addCount" class="form-input" placeholder="e.g. 10">
+        </div>
+
+        <button type="submit" class="action-btn" style="background:var(--glass); color:#fff; border:none; font-weight:700;">➕ Add to Inventory Stock</button>
+      </form>
+    </div>
+
+  </div>
+</div>
+
+<!-- Minus / Deduct Raw Waste Modal -->
+<div id="minusModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+  <div style="background:#fff; width:100%; max-width:420px; padding:24px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <h3 style="margin:0; font-family:'Oswald'; color:var(--red);">➖ Deduct Raw Waste KG</h3>
+      <button type="button" onclick="closeMinusModal()" style="border:none; background:none; font-size:20px; cursor:pointer;">✕</button>
+    </div>
+    <form method="POST" action="/staff/deduct_raw_waste" onsubmit="return validateMinusForm()">
+      <input type="hidden" name="category_id" id="minusCatId">
+      <div style="margin-bottom:12px;">
+        <label style="font-size:10px; font-family:'JetBrains Mono'; text-transform:uppercase; color:var(--text-faint); display:block; margin-bottom:4px;">Waste Category</label>
+        <input type="text" id="minusCatName" readonly style="width:100%; padding:9px 12px; background:var(--panel-raised); border:1px solid var(--line); border-radius:6px; font-weight:700;">
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:10px; font-family:'JetBrains Mono'; text-transform:uppercase; color:var(--text-faint); display:block; margin-bottom:4px;">Available Stock (KG)</label>
+        <input type="text" id="minusCatStock" readonly style="width:100%; padding:9px 12px; background:var(--panel-raised); border:1px solid var(--line); border-radius:6px;">
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:10px; font-family:'JetBrains Mono'; text-transform:uppercase; color:var(--text-faint); display:block; margin-bottom:4px;">KG to Minus / Deduct *</label>
+        <input type="number" step="0.01" min="0.01" name="qty_kg" id="minusQtyKg" required placeholder="e.g. 5.0" style="width:100%; padding:9px 12px; border:1px solid var(--line); border-radius:6px; font-size:14px;">
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:10px; font-family:'JetBrains Mono'; text-transform:uppercase; color:var(--text-faint); display:block; margin-bottom:4px;">Deduction Purpose *</label>
+        <select name="deduct_type" required style="width:100%; padding:9px 12px; border:1px solid var(--line); border-radius:6px; font-size:13px;">
+          <option value="recycling">♻ Used for Recycling / Processing</option>
+          <option value="disposal">🗑 Staff Disposal / Non-Usable Waste</option>
+        </select>
+      </div>
+      <div style="margin-bottom:18px;">
+        <label style="font-size:10px; font-family:'JetBrains Mono'; text-transform:uppercase; color:var(--text-faint); display:block; margin-bottom:4px;">Reason / Notes</label>
+        <input type="text" name="reason" placeholder="e.g. Processing into chairs / Damaged batch" style="width:100%; padding:9px 12px; border:1px solid var(--line); border-radius:6px; font-size:13px;">
+      </div>
+      <div style="display:flex; gap:10px;">
+        <button type="button" onclick="closeMinusModal()" style="flex:1; padding:10px; border:1px solid var(--line); background:#fff; border-radius:6px; cursor:pointer;">Cancel</button>
+        <button type="submit" style="flex:1; padding:10px; border:none; background:var(--red); color:#fff; font-weight:700; border-radius:6px; cursor:pointer;">Deduct KG Now →</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+let currentMinusAvailable = 0;
+
+function openMinusModal(catId, catName, currentStock){
+  currentMinusAvailable = parseFloat(currentStock || 0);
+  document.getElementById('minusCatId').value = catId;
+  document.getElementById('minusCatName').value = catName;
+  document.getElementById('minusCatStock').value = currentStock + ' kg available';
+  document.getElementById('minusQtyKg').max = currentMinusAvailable;
+  document.getElementById('minusModal').style.display = 'flex';
+}
+function closeMinusModal(){
+  document.getElementById('minusModal').style.display = 'none';
+}
+function validateMinusForm(){
+  const qty = parseFloat(document.getElementById('minusQtyKg').value || 0);
+  if (qty <= 0) {
+    alert("Please enter a valid quantity greater than 0.");
+    return false;
+  }
+  if (qty > currentMinusAvailable) {
+    alert(`Quantity (${qty} kg) cannot exceed available stock (${currentMinusAvailable} kg).`);
+    return false;
+  }
+  return true;
+}
+
+function handleAddUnit(){
+  const sel=document.getElementById('addProduct');
+  if(!sel ||!sel.value) return;
+  const unit=sel.options[sel.selectedIndex].dataset.unit;
+  document.getElementById('addKgGroup').style.display=unit=='kg'?'block':'none';
+  document.getElementById('addCountGroup').style.display=unit!='kg'?'block':'none';
+}
+
+function validateAddToInventory(){
+  const sel = document.getElementById('addProduct');
+  if(!sel ||!sel.value) { alert("Please select a product."); return false; }
+  const unit = sel.options[sel.selectedIndex].dataset.unit;
+  if(unit == 'kg') {
+    const kg = parseFloat(document.getElementById('addKg').value || 0);
+    if(kg <= 0) { alert("Please enter usable weight > 0 kg."); return false; }
+  } else {
+    const cnt = parseInt(document.getElementById('addCount').value || 0);
+    if(cnt <= 0) { alert("Please enter usable quantity > 0."); return false; }
+  }
+  return true;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  handleAddUnit();
+
+  // Chart 1: Raw Waste Stock Distribution
+  const rawCtx = document.getElementById('rawWastePieChart');
+  if (rawCtx) {
+    const rawData = [
+      {% for cat in raw_waste_stock %}
+        {% if cat['current_stock_kg']|float > 0 %}
+        { label: "{{ cat['category_name'] }}", value: {{ cat['current_stock_kg']|float }} },
+        {% endif %}
+      {% endfor %}
+    ];
+
+    const rawLabels = rawData.map(d => d.label);
+    const rawValues = rawData.map(d => d.value);
+    const rawColors = ['#5A8A3A', '#C17F1A', '#B94E33', '#2563EB', '#7C3AED', '#059669', '#D97706'];
+
+    new Chart(rawCtx, {
+      type: 'doughnut',
+      data: {
+        labels: rawLabels.length? rawLabels : ['No Raw Stock'],
+        datasets: [{
+          data: rawValues.length? rawValues : [1],
+          backgroundColor: rawLabels.length? rawColors.slice(0, rawLabels.length) : ['#E4E7E0'],
+          borderWidth: 2,
+          borderColor: '#ffffff'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 10, font: { family: 'Inter', size: 10 } } }
+        },
+        cutout: '55%'
+      }
+    });
+  }
+
+  // Chart 2: Finished Goods Inventory
+  const invCtx = document.getElementById('recycledInventoryPieChart');
+  if (invCtx) {
+    const invData = [
+      {% for item in inventory %}
+        {% set stock_val = item['stock_kg']|float if item['unit']=='kg' else item['stock_count']|float %}
+        {% if stock_val > 0 %}
+        { label: "{{ item['recycled_name'] }}", value: {{ stock_val }} },
+        {% endif %}
+      {% endfor %}
+    ];
+
+    const invLabels = invData.map(d => d.label);
+    const invValues = invData.map(d => d.value);
+    const invColors = ['#2563EB', '#059669', '#C17F1A', '#7C3AED', '#B94E33', '#0284C7', '#D97706'];
+
+    new Chart(invCtx, {
+      type: 'doughnut',
+      data: {
+        labels: invLabels.length? invLabels : ['No Inventory'],
+        datasets: [{
+          data: invValues.length? invValues : [1],
+          backgroundColor: invLabels.length? invColors.slice(0, invLabels.length) : ['#E4E7E0'],
+          borderWidth: 2,
+          borderColor: '#ffffff'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 10, font: { family: 'Inter', size: 10 } } }
+        },
+        cutout: '55%'
+      }
+    });
+  }
+});
+</script>
+</body>
+</html>

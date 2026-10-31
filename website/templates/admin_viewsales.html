@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EcoCycle - Sales Log</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pending_households.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/add_worker.css') }}" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;}
+    .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:18px;}
+    .stat{background:#fff; border:1px solid #E8E2D9; border-radius:14px; padding:18px;}
+    .stat.dark{background:#1A3C34; color:#fff;}
+    .stat.amber{background:#FFF8E1; border-color:#F9C74F;}
+    .stat .val{font-family:'Fraunces'; font-size:24px; font-weight:700; display:block;}
+    .stat .lab{font-family:'JetBrains Mono'; font-size:11px; color:#8B8B8B; margin-top:4px; display:block;}
+    .stat.dark .lab{color:#B5C99A;} .stat.amber .lab{color:#8A6D00;}
+    .filter-card{background:#FFFCF5; border:1px solid #E8E2D9; border-radius:14px; padding:16px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:18px;}
+    .filter-card select,.filter-card input{padding:10px 14px; border-radius:8px; border:1.5px solid #D9D2C7; font-family:'Inter'; font-size:13px; background:#fff;}
+    .filter-card input{min-width:240px;}
+    .btn-go{background:#1A3C34; color:#fff; border:none; padding:10px 18px; border-radius:8px; font-weight:700; cursor:pointer; font-family:'Inter';}
+    .btn-clear{padding:10px 14px; border:1px solid #D9D2C7; border-radius:8px; background:#fff; text-decoration:none; color:#1A3C34; font-family:'JetBrains Mono'; font-size:12px; font-weight:600;}
+    .record-badge{margin-left:auto; font-family:'JetBrains Mono'; font-size:11px; background:#F5F1EB; padding:6px 14px; border-radius:20px; color:#1A3C34; font-weight:700;}
+    .sales-card{background:#fff; border:1px solid #E8E2D9; border-radius:16px; padding:20px;}
+    .sales-header{display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;}
+    .sales-header h2{font-family:'Fraunces'; font-size:20px; margin:0;}
+    .table-wrap{overflow:auto; border:1px solid #E8E2D9; border-radius:12px;}
+    table{width:100%; border-collapse:collapse; min-width:1400px;}
+    thead{background:#F5F1EB;}
+    th{font-family:'JetBrains Mono'; font-size:10.5px; text-align:left; padding:12px 13px; color:#1A3C34; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; white-space:nowrap;}
+    td{padding:12px 13px; font-size:13px; border-top:1px solid #F0EDE1; vertical-align:middle;}
+    .badge{padding:4px 10px; border-radius:20px; font-size:10px; font-weight:700; font-family:'JetBrains Mono'; display:inline-block;}
+    .badge-resale{background:#E8F5E9; color:#2E7D32; border:1px solid #A5D6A7;}
+    .profit{font-family:'JetBrains Mono'; font-weight:700; color:#2A6B5E;}
+    .mono{font-family:'JetBrains Mono'; font-size:12px;}
+    .dim{color:#8B8B8B; font-size:11px; font-family:'JetBrains Mono';}
+    .flash-popup{position:fixed; top:18px; right:18px; background:#1A3C34; color:#fff; padding:12px 18px; border-radius:10px; z-index:9999; font-family:'Inter';}
+    .detail-row{display:flex; flex-direction:column; gap:3px;}
+    .detail-item{display:flex; align-items:center; gap:5px; font-family:'JetBrains Mono'; font-size:10.5px; color:#555;}
+    .detail-item span.lbl{color:#9AA096; min-width:50px; font-size:10px; text-transform:uppercase;}
+    .contact-cell b{font-size:13px; display:block;}
+    @media(max-width:900px){.stats{grid-template-columns:repeat(2,1fr);}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon">EC</div><span>EcoCycle Admin</span></div>
+    <nav class="sidebar-nav">
+      <p class="nav-section">OVERVIEW</p>
+      <a href="{{ url_for('admin_dashboard') }}" class="nav-item">Dashboard</a>
+      <p class="nav-section">CONFIGURATION</p>
+      <a href="{{ url_for('recycled_products') }}" class="nav-item">Recycled Products</a>
+      <a href="{{ url_for('wastes_rewards') }}" class="nav-item">Waste Categories</a>
+      <p class="nav-section">REVENUE</p>
+      <a href="{{ url_for('admin_viewinventory') }}" class="nav-item">Inventory</a>
+      <a href="{{ url_for('admin_viewsales') }}" class="nav-item active">Sales Log</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="main-header">
+      <div>
+        <h1 class="page-title">Sales Log — Admin View</h1>
+        <p class="page-subtitle">Resale transactions by staff — full buyer & vehicle details</p>
+      </div>
+    </header>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}{% for msg in messages %}<div class="flash-popup">✅ {{ msg }}</div>{% endfor %}{% endif %}
+    {% endwith %}
+
+    <!-- STAT CARDS (Resale only — no disposal) -->
+    <section class="stats">
+      <div class="stat">
+        <span class="val">₹ {{ today_rev|int }}</span>
+        <span class="lab">Today Revenue ({{ today_kg|int }} kg sold)</span>
+      </div>
+      <div class="stat amber">
+        <span class="val" style="color:#8A6D00;">₹ {{ month_rev|int }}</span>
+        <span class="lab">This Month Revenue ({{ month_cnt }} sales)</span>
+      </div>
+      <div class="stat dark">
+        <span class="val">₹ {{ total_rev|int }}</span>
+        <span class="lab">Total All-Time Revenue</span>
+      </div>
+      <div class="stat" style="border-left:4px solid #2A6B5E;">
+        <span class="val" style="color:#2A6B5E;">{{ total_cnt }}</span>
+        <span class="lab">Total Resale Transactions</span>
+      </div>
+    </section>
+
+    <!-- FILTERS -->
+    <form method="GET" class="filter-card">
+      <select name="type">
+        <option value="resale" {% if filter_type=='resale' %}selected{% endif %}>Resale Only</option>
+        <option value="all"    {% if filter_type=='all'    %}selected{% endif %}>All Types (incl. Disposal)</option>
+      </select>
+      <select name="date">
+        <option value="all"   {% if filter_date=='all'   %}selected{% endif %}>All Time</option>
+        <option value="today" {% if filter_date=='today' %}selected{% endif %}>Today</option>
+        <option value="week"  {% if filter_date=='week'  %}selected{% endif %}>Last 7 Days</option>
+        <option value="month" {% if filter_date=='month' %}selected{% endif %}>This Month</option>
+      </select>
+      <input type="text" name="search" placeholder="Search product, buyer, contact, vehicle, staff, payment..." value="{{ search }}" style="min-width:300px;">
+      <button type="submit" class="btn-go">Filter</button>
+      <a href="{{ url_for('admin_viewsales') }}" class="btn-clear">Clear</a>
+      <span class="record-badge">{{ sales|length }} records</span>
+    </form>
+
+    <!-- TABLE -->
+    <section class="sales-card">
+      <div class="sales-header">
+        <h2>Resale Transactions</h2>
+        <span style="font-family:'JetBrains Mono'; font-size:11px; background:#E8F5E9; color:#2E7D32; padding:5px 12px; border-radius:20px; border:1px solid #A5D6A7;">● Showing Resale Only</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date &amp; Time</th>
+              <th>Product</th>
+              <th>Qty</th>
+              <th>Rate</th>
+              <th>GST</th>
+              <th>Amount</th>
+              <th>Buyer / Company</th>
+              <th>Contact</th>
+              <th>Payment Mode</th>
+              <th>Vehicle No</th>
+              <th>Staff</th>
+              <th>Remarks</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in sales %}
+            <tr>
+              <td>
+                <span class="mono">{{ s['created_at'].strftime('%d %b %Y') if s['created_at'] else '' }}</span><br>
+                <small class="dim">{{ s['created_at'].strftime('%I:%M %p') if s['created_at'] else '' }}</small>
+              </td>
+              <td>
+                <b>{{ s['recycled_name'] }}</b><br>
+                <small class="dim">{{ s['unit']|upper }}</small>
+              </td>
+              <td class="mono" style="font-weight:700;">
+                {% if s['qty_kg'] and s['qty_kg']>0 %}{{ s['qty_kg'] }} kg{% else %}{{ s['qty_count'] }} pcs{% endif %}
+              </td>
+              <td class="mono">₹ {{ s['rate_per_kg'] or s['rate_per_count'] }}/{{ s['unit'] }}</td>
+              <td class="mono">{{ s['gst_percent'] or 0 }}%</td>
+              <td class="profit" style="font-size:15px;">₹ {{ s['amount']|int }}</td>
+              <td class="contact-cell">
+                <b>{{ s['buyer_company'] or s['buyer_name'] or '—' }}</b>
+                {% if s['buyer_company'] and s['buyer_name'] %}
+                  <small class="dim">{{ s['buyer_name'] }}</small>
+                {% endif %}
+              </td>
+              <td class="mono" style="color:#555; white-space:nowrap;">
+                {% if s['buyer_contact'] and s['buyer_contact'] != '0000000000' %}{{ s['buyer_contact'] }}{% else %}<span class="dim">—</span>{% endif %}
+              </td>
+              <td>
+                {% if s['payment_mode'] and s['payment_mode'] != 'N/A' %}
+                  <span style="background:#E3F2FD; color:#1565C0; border-radius:20px; padding:3px 9px; font-family:'JetBrains Mono'; font-size:10px; font-weight:700;">{{ s['payment_mode'] }}</span>
+                {% else %}<span class="dim">—</span>{% endif %}
+              </td>
+              <td class="mono" style="color:#555; white-space:nowrap;">
+                {% if s['vehicle_no'] and s['vehicle_no'] != 'N/A' %}{{ s['vehicle_no'] }}{% else %}<span class="dim">—</span>{% endif %}
+              </td>
+              <td style="color:#1A3C34; font-weight:600; white-space:nowrap;">{{ s['staff_name'] or ('Staff #' + (s['staff_id']|string)) }}</td>
+              <td><small class="dim">{{ s['description'] or '—' }}</small></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="12" style="text-align:center; padding:40px; color:#8B8B8B; font-family:'JetBrains Mono';">No resale transactions found. Try changing filters.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+setTimeout(()=>{ document.querySelectorAll('.flash-popup').forEach(e=>e.remove()) }, 3000);
+</script>
+</body>
+</html>

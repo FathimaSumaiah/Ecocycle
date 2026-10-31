@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pending Approvals - EcoCycle Admin</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pending_households.css') }}" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  
+<div class="app">
+  <!-- <aside class="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon">EC</div><span>EcoCycle Admin</span></div>
+    <nav class="sidebar-nav">
+      <p class="nav-section">OVERVIEW</p>
+    <a href="{{ url_for('admin_dashboard') }}" class="nav-item dashboard-link">Dashboard</a>
+    <p class="nav-section">HOUSEHOLDS</p>
+      <a href="/pending_households" class="nav-item active">Pending Approvals <span class="badge">{{pending_count}}</span></a>
+<a href="/view_households" class="nav-item">All Households</a>
+    </nav>
+  </aside> -->
+
+  <main class="main">
+    <div style="margin-bottom:12px;">
+      <a href="/admin_dashboard" style="display:inline-flex; align-items:center; gap:6px; background:#141413; border:1px solid #E6E0D0; padding:8px 14px; border-radius:8px; text-decoration:none; font-family:'JetBrains Mono'; font-size:12px; color:#ffffff;">← Back</a>
+    </div>
+    <header class="main-header">
+      <div>
+        <h1 class="page-title">Pending Household Approvals</h1>
+        <p class="page-subtitle">REVIEW & VERIFY NEW REGISTRATIONS — {{pending_count}} PENDING</p>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <div class="search-box">
+        <span>🔍</span>
+        <input type="text" id="searchInput" placeholder="Search by name, house no, phone, ward..." onkeyup="filterTable()">
+      </div>
+      <div class="filters">
+        <select class="select" id="wardFilter" onchange="filterTable()">
+          <option value="all">All Wards</option>
+          {% for w in all_wards %}
+            <option value="{{ w[0] }}">{{ w[0] }}</option>
+          {% endfor %}
+        </select>
+        <select class="select" id="sortFilter" onchange="sortTable()">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="name">Name A-Z</option>
+        </select>
+        <span class="pill-count" id="countPill">{{ pending_count }} pending</span>
+</div>
+    </div>
+
+    <div class="bulk-bar" id="bulkBar" style="display:none;">
+      <span><span id="selectedCount">0</span> selected</span>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-approve" onclick="bulkApprove()">BULK APPROVE</button>
+        <button class="btn btn-reject" onclick="bulkReject()">BULK REJECT</button>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="table-wrap">
+        <table>
+    <thead>
+    <tr>
+      <th><input type="checkbox" id="selectAll" onchange="toggleAll(this)"></th>
+      <th>APPLICANT</th>
+      <th>WARD</th>
+      <th>HOUSE NO.</th>
+      <th>CONTACT</th>
+      <th>UPI ID</th>
+      <th>AADHAAR</th>
+      <th>LOCATION</th>
+      <th>SUBMITTED</th>
+      <th>ADD AREA</th>
+      <th>ACTION</th>
+    </tr>
+  </thead>
+ <tbody id="pendingTable">
+{% for p in pending %}
+<tr data-name="{{ p['full_name']|lower }}" data-ward="{{ p['ward_no'] }}" data-house="{{ p['house_no']|lower }}" data-phone="{{ p['phone'] }}">
+  <td><input type="checkbox" class="row-check" value="{{ p['household_id'] }}" onchange="updateBulk()"></td>
+  <td>
+    <div class="worker-cell">
+      <div class="worker-avatar household-avatar">{{ p['full_name'][:2]|upper }}</div>
+      <div class="worker-meta">
+        <span class="w-name">{{ p['full_name'] }}</span>
+        <small class="mono-small">ID: #{{ 1000 + p['household_id'] }}</small>
+      </div>
+    </div>
+  </td>
+  <td><span class="ward-pill">Ward {{ p['ward_no'] }}</span></td>
+  <td><span class="house-pill">{{ p['house_no'] }}</span></td>
+  <td>{{ p['phone'] }}</td>
+  <td style="font-size:12px;">{{ p['upi_id'] or '-' }}</td>
+  <td><a href="/view_aadhaar/household/{{ p['household_id'] }}">View Aadhaar</a></td>
+  <td>
+    {% if p['latitude'] and p['longitude'] %}
+      <a href="https://www.google.com/maps?q={{ p['latitude'] }},{{ p['longitude'] }}" target="_blank" style="font-size:12px; color:#2d7a3a; font-weight:600;">📍 View Map</a>
+      <br><small class="mono-small">{{ p['latitude'] }},{{ p['longitude'] }}</small>
+    {% else %}
+      <small style="color:#999;">No location</small>
+    {% endif %}
+  </td>
+  <td>{{ p['created_at'].strftime('%d-%m-%Y %H:%M') if p['created_at'] else '-' }}</td>
+  <td>
+    <form action="{{ url_for('approve_household', household_id=p['household_id']) }}" method="POST" style="display:flex; gap:6px;">
+      <select name="area" required style="padding:6px 8px; border-radius:6px; border:1px solid #C9C3B1; font-size:12px; min-width:140px;">
+        <option value="">Select Area</option>
+        {% for a in areas_list %}
+          {% if a['ward_no']|string == p['ward_no']|string %}
+            <option value="{{ a['area_name'] }}">{{ a['area_name'] }}</option>
+          {% endif %}
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn-edit" style="padding:6px 10px;">APPROVE</button>
+    </form>
+  </td>
+  <td>
+    <div class="action-btns">
+      <a href="{{ url_for('reject_household', household_id=p['household_id']) }}" class="btn-delete">REJECT</a>
+    </div>
+  </td>
+</tr>
+{% else %}
+<tr><td colspan="11" style="text-align:center; padding:20px;">No pending households</td></tr>
+{% endfor %}
+</tbody>
+</table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="modal-overlay" id="photoModal" onclick="closeModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3 id="modalName">Aadhaar Verification</h3>
+    <p style="font-size:13px; color:#7A8A83; margin-bottom:12px;">Verify photo and details match application.</p>
+    <div style="background:#F0EDE1; height:180px; border-radius:10px; display:grid; place-items:center; border:1px dashed #C9C3B1;">Aadhaar Photo Preview</div>
+    <div class="modal-actions">
+      <button class="btn btn-reject" onclick="closeModal()">CLOSE</button>
+      <button class="btn btn-approve" onclick="closeModal(); toast('Verified')">VERIFY OK</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+function filterTable(){
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  const ward=document.getElementById('wardFilter').value;
+  document.querySelectorAll('#pendingTable tr').forEach(tr=>{
+    const matchSearch = tr.dataset.name.includes(q) || tr.dataset.house.includes(q) || tr.dataset.phone.includes(q);
+    const matchWard = ward==='all' || tr.dataset.ward===ward;
+    tr.style.display = (matchSearch && matchWard)? '' : 'none';
+  });
+}
+function sortTable(){
+  const val=document.getElementById('sortFilter').value;
+  const tbody=document.getElementById('pendingTable');
+  const rows=[...tbody.querySelectorAll('tr')];
+  if(val==='name') rows.sort((a,b)=>a.dataset.name.localeCompare(b.dataset.name));
+  rows.forEach(r=>tbody.appendChild(r));
+}
+function toggleAll(el){
+  document.querySelectorAll('.row-check').forEach(c=>{c.checked=el.checked;});
+  updateBulk();
+}
+function updateBulk(){
+  const checked=document.querySelectorAll('.row-check:checked').length;
+  document.getElementById('selectedCount').textContent=checked;
+  document.getElementById('bulkBar').style.display= checked? 'flex' : 'none';
+}
+function openModal(name){
+  document.getElementById('modalName').textContent=name+' - Aadhaar';
+  document.getElementById('photoModal').style.display='grid';
+}
+function closeModal(){ document.getElementById('photoModal').style.display='none'; }
+</script>
+</body>
+</html>

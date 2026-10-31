@@ -1,0 +1,366 @@
+/* ===========================
+   EcoCycle - Add Worker Page
+=========================== */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:'Inter',sans-serif;
+    background:#F8F5ED;
+    color:#1A2A24;
+}
+
+.app{
+    display:flex;
+    min-height:100vh;
+}
+
+
+
+/* ================= Main ================= */
+
+.main{
+    flex:1;
+    padding:35px 45px;
+    background:#F8F5ED;
+}
+
+.main-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:30px;
+}
+
+.page-title{
+    font-size:34px;
+    font-family:'Fraunces',serif;
+    color:#1A2A24;
+}
+
+.page-subtitle{
+    margin-top:6px;
+    font-size:12px;
+    font-family:'JetBrains Mono',monospace;
+    color:#6F8178;
+}
+
+.user-chip{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    background:#fff;
+    border:1px solid #E5DED1;
+    padding:10px 16px;
+    border-radius:50px;
+    font-weight:600;
+}
+
+.avatar{
+    width:38px;
+    height:38px;
+    border-radius:50%;
+    background:#2A6B5E;
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+/* ================= Card ================= */
+
+.form-card{
+    background:#FFFCF6;
+    border:1px solid #E7E1D4;
+    border-radius:18px;
+    overflow:hidden;
+    max-width:900px;
+}
+
+.form-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:24px 30px;
+    border-bottom:1px solid #ECE5D8;
+}
+
+.form-head h2{
+    font-size:24px;
+    font-family:'Fraunces',serif;
+}
+
+.form-head p{
+    margin-top:5px;
+    color:#7A8A83;
+    font-size:12px;
+    font-family:'JetBrains Mono',monospace;
+}
+
+.ward-pill{
+    background:#E3F0EC;
+    color:#2A6B5E;
+    padding:8px 16px;
+    border-radius:50px;
+    font-size:12px;
+    font-family:'JetBrains Mono',monospace;
+}
+
+/* ================= Form ================= */
+
+.form-body{
+    padding:32px;
+}
+
+.form-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:24px;
+}
+
+.form-group{
+    display:flex;
+    flex-direction:column;
+}
+
+.form-group.full{
+    grid-column:1/-1;
+}
+
+.form-group label{
+    margin-bottom:8px;
+    font-size:12px;
+    font-family:'JetBrains Mono',monospace;
+    text-transform:uppercase;
+}
+
+.req{
+    color:#A33A2B;
+}
+
+.form-group input{
+    padding:13px 15px;
+    border:1px solid #DDD5C7;
+    border-radius:10px;
+    background:#fff;
+    font-size:15px;
+    outline:none;
+    transition:.2s;
+}
+
+.form-group input:focus{
+    border-color:#2A6B5E;
+    box-shadow:0 0 0 3px rgba(42,107,94,.12);
+}
+
+.form-group input::placeholder{
+    color:#A9B1AC;
+}
+
+.helper{
+    margin-top:6px;
+    color:#7A8A83;
+    font-size:11px;
+    font-family:'JetBrains Mono',monospace;
+}
+
+/* ================= Footer ================= */
+
+.form-footer{
+    padding:22px 32px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:#F7F3EA;
+    border-top:1px solid #ECE5D8;
+}
+
+.btn-primary{
+    background:#1A2A24;
+    color:#fff;
+    border:none;
+    padding:13px 26px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:13px;
+    font-family:'JetBrains Mono',monospace;
+    transition:.25s;
+}
+
+.btn-primary:hover{
+    background:#2A6B5E;
+}
+
+.btn-secondary{
+    padding:13px 22px;
+    border:1px solid #D9D0C2;
+    border-radius:10px;
+    background:#fff;
+    color:#1A2A24;
+    text-decoration:none;
+    font-size:13px;
+    font-family:'JetBrains Mono',monospace;
+    transition:.25s;
+}
+
+.btn-secondary:hover{
+    background:#EFE8DA;
+}
+
+/* ================= Alerts ================= */
+
+.alert{
+    display:none;
+}
+
+.toast{
+    position:fixed;
+    top:25px;
+    right:25px;
+    background:#2A6B5E;
+    color:#fff;
+    padding:14px 20px;
+    border-radius:10px;
+    opacity:0;
+    transition:.3s;
+}
+
+.toast.show{
+    opacity:1;
+}
+
+/* ================= Responsive ================= */
+
+@media(max-width:900px){
+
+    .sidebar{
+        display:none;
+    }
+
+    .main{
+        padding:25px;
+    }
+
+    .form-grid{
+        grid-template-columns:1fr;
+    }
+
+    .main-header{
+        flex-direction:column;
+        align-items:flex-start;
+        gap:15px;
+    }
+
+    .form-footer{
+        flex-direction:column;
+        gap:15px;
+    }
+
+    .btn-primary,
+    .btn-secondary{
+        width:100%;
+        text-align:center;
+    }
+}
+/* =============================
+   Registered Areas Table
+============================= */
+
+.table-wrap{
+    width:100%;
+    overflow-x:auto;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+table thead{
+    background:#F7F3EA;
+}
+
+table th{
+    padding:14px 18px;
+    text-align:left;
+    border-bottom:1px solid #E7E1D4;
+    font-size:12px;
+    font-family:'JetBrains Mono',monospace;
+    text-transform:uppercase;
+    color:#6F8178;
+}
+
+table td{
+    padding:16px 18px;
+    border-bottom:1px solid #ECE5D8;
+    font-size:14px;
+}
+
+table tbody tr:hover{
+    background:#FCFAF5;
+    transition:.2s;
+}
+
+.form-card{
+    margin-bottom:30px;
+}
+
+/* Small action buttons */
+
+.table-actions{
+    display:flex;
+    gap:10px;
+}
+
+.btn-small{
+    padding:8px 14px;
+    border-radius:8px;
+    text-decoration:none;
+    font-size:12px;
+    font-family:'JetBrains Mono',monospace;
+    transition:.25s;
+}
+
+.btn-edit{
+    border:1px solid #2A6B5E;
+    color:#2A6B5E;
+    background:#fff;
+}
+
+.btn-edit:hover{
+    background:#2A6B5E;
+    color:#fff;
+}
+
+.btn-delete{
+    border:1px solid #8B3A2A;
+    color:#8B3A2A;
+    background:#fff;
+}
+
+.btn-delete:hover{
+    background:#8B3A2A;
+    color:#fff;
+}
+
+.empty-table {
+    text-align: center;
+    padding: 50px 20px;
+}
+
+.empty-state h3 {
+    margin: 0;
+    font-size: 22px;
+    color: #18352c;
+    font-family: "Fraunces", serif;
+}
+
+.empty-state p {
+    margin-top: 10px;
+    color: #6f7b74;
+    font-size: 15px;
+}

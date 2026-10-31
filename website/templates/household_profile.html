@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EcoCycle - My Profile</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/household_dashboard.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/household_profile.css') }}" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+<div class="household-app">
+  <header class="h-header">
+    <div class="h-logo">
+      <img src="{{ url_for('static', filename='images/eco_cycle_logo.webp') }}" alt="EcoCycle Logo" style="width:36px; height:36px; border-radius:10px; object-fit:contain; background:#fff; padding:3px;">
+      EcoCycle <small>Household</small>
+    </div>
+    <div class="h-nav">
+      <a href="/household_dashboard">Home</a>
+      <a href="/rewards">Rewards</a>
+          <a href="/household/feedback">Feedbacks</a>
+
+      <a href="/household_profile" class="active">Profile</a>
+    </div>
+    <div class="h-profile">
+      <div class="avatar-circle">{{ household['full_name'][:2]|upper }}</div>
+    </div>
+  </header>
+
+  <main class="h-main">
+    <div class="profile-header">
+      <div class="profile-avatar-large">{{ household['full_name'][:2]|upper }}</div>
+      <div style="flex:1;">
+        <h1>{{ household['full_name'] }}</h1>
+        <p class="mono">House No: {{ household['house_no'] }} · Ward {{ household['ward_no'] }} · {{ household['area'] }} · Approved Household</p>
+        <span class="level-badge">Eco Member</span>
+      </div>
+      <a href="/logout" style="background:#C94A3A; color:#fff; padding:6px 14px; border-radius:20px;">Logout</a>
+    </div>
+
+    <div class="profile-two-col">
+      <section class="card profile-card">
+        <div class="card-head">
+          <h2>Personal Information</h2>
+          <span class="mono-small">Editable</span>
+        </div>
+        <div class="profile-form">
+          <div class="form-group editable">
+            <label>Full Name <span class="edit-badge">✎ Editable</span></label>
+            <div class="input-with-btn">
+              <input type="text" id="nameInput" value="{{ household['full_name'] }}">
+            </div>
+          </div>
+          <div class="form-group editable">
+            <label>📞 Phone Number <span class="edit-badge">✎ Editable</span></label>
+            <div class="input-with-btn">
+              <input type="text" id="phoneInput" value="{{ household['phone'] }}" maxlength="10">
+            </div>
+          </div>
+          <div class="form-group editable">
+            <label>📧 Email <span class="edit-badge">✎ Editable</span></label>
+            <div class="input-with-btn">
+              <input type="email" id="emailInput" value="{{ household['email'] }}">
+            </div>
+          </div>
+          <div class="form-group editable">
+            <label>💸 UPI ID <span class="edit-badge">✎ Editable</span></label>
+            <div class="input-with-btn">
+              <input type="text" id="upiInput" value="{{ household['upi_id'] or '' }}" placeholder="yourname@oksbi">
+            </div>
+          </div>
+          <button class="btn-save" style="width:100%; margin-top:10px;" onclick="saveProfile()">Save Changes</button>
+          <div class="divider"></div>
+
+          <!-- ── Change Password ── -->
+          <div class="card-head" style="margin-top:18px;">
+            <h2>🔑 Change Password</h2>
+          </div>
+          <div class="form-group editable">
+            <label>Current Password</label>
+            <div class="input-with-btn" style="position:relative;">
+              <input type="password" id="oldPw" placeholder="Enter current password" style="padding-right:38px;">
+              <span onclick="toggleEye('oldPw',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:16px;">👁️</span>
+            </div>
+          </div>
+          <div class="form-group editable">
+            <label>New Password</label>
+            <div class="input-with-btn" style="position:relative;">
+              <input type="password" id="newPw" placeholder="Min. 6 characters" style="padding-right:38px;">
+              <span onclick="toggleEye('newPw',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:16px;">👁️</span>
+            </div>
+          </div>
+          <div class="form-group editable">
+            <label>Confirm New Password</label>
+            <div class="input-with-btn" style="position:relative;">
+              <input type="password" id="confPw" placeholder="Repeat new password" style="padding-right:38px;">
+              <span onclick="toggleEye('confPw',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:16px;">👁️</span>
+            </div>
+          </div>
+          <button class="btn-save" style="width:100%; margin-top:10px; background:#1A3C34;" onclick="changePassword()">Change Password</button>
+          <div class="divider"></div>
+
+          <div class="form-group locked">
+            <label>Ward No <span class="lock-badge">🔒 Locked</span></label>
+            <div class="locked-field"><span>🏘</span><input type="text" value="{{ household['ward_no'] }}" disabled></div>
+          </div>
+          <div class="form-group locked">
+            <label>Area <span class="lock-badge">🔒 Locked</span></label>
+            <div class="locked-field"><span>📍</span><input type="text" value="{{ household['area'] }}" disabled></div>
+          </div>
+          <div class="form-group locked">
+            <label>House No <span class="lock-badge">🔒 Locked</span></label>
+            <div class="locked-field"><span>🏠</span><input type="text" value="{{ household['house_no'] }}" disabled></div>
+          </div>
+        </div>
+      </section>
+
+      <div class="right-stack">
+        <section class="card">
+          <div class="card-head"><h2>Aadhaar Verification</h2><span class="mono-small">🔒 Not editable</span></div>
+          <div><img src="{{ url_for('static', filename=household['aadhaar_photo']) }}" class="aadhaar-img" alt="Aadhaar Photo"></div>
+        </section>
+        <section class="card location-card">
+          <div class="card-head"><h2>📍 Your Location</h2><button class="btn-small" onclick="openInMaps()">Open in Maps</button></div>
+          <div id="map" class="map-box"></div>
+          <div class="location-details">
+            <div class="loc-row"><span class="mono">LAT / LNG</span><b id="latlngText">{{ household['latitude'] }}, {{ household['longitude'] }}</b></div>
+            <div class="loc-row"><span class="mono">ADDRESS</span><b>House {{ household['house_no'] }}, Ward {{ household['ward_no'] }}, {{ household['area'] }}</b></div>
+            <div class="loc-actions"><button class="btn-outline" onclick="copyLocation()">Copy Coordinates</button><button class="btn-outline" onclick="getDirections()">Get Directions</button></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+<div id="toast" class="toast"></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+function saveProfile(){
+  const newName = document.getElementById("nameInput").value.trim();
+  const newPhone = document.getElementById("phoneInput").value.trim();
+  const newEmail = document.getElementById("emailInput").value.trim();
+  const newUpi = document.getElementById("upiInput").value.trim();
+  if(newName.length < 2){ toast("⚠ Name min 2 chars"); return; }
+  if(!/^[0-9]{10}$/.test(newPhone)){ toast("⚠ Valid 10-digit phone"); return; }
+  if(!/^[^@]+@[^@]+\.[^@]+$/.test(newEmail)){ toast("⚠ Valid email"); return; }
+  if(newUpi &&!newUpi.includes("@")){ toast("⚠ Valid UPI must contain @"); return; }
+  fetch("/api/household/update-profile",{method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({name:newName, phone:newPhone, email:newEmail, upi_id:newUpi})}).then(r=>r.json()).then(data=>{
+    if(data.success){ toast("✅ Profile updated"); document.querySelector(".profile-header h1").textContent=newName; document.querySelectorAll(".avatar-circle,.profile-avatar-large").forEach(e=> e.textContent=newName.slice(0,2).toUpperCase()); }else{ toast("❌ "+data.message); }
+  });
+}
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 3500); }
+function toggleEye(id, el){ const inp=document.getElementById(id); inp.type=inp.type==='password'?'text':'password'; el.textContent=inp.type==='password'?'👁️':'🙈'; }
+async function changePassword(){
+  const old_password  = document.getElementById('oldPw').value;
+  const new_password  = document.getElementById('newPw').value.trim();
+  const confirm_password = document.getElementById('confPw').value.trim();
+  if(!old_password){ toast('⚠ Enter your current password'); return; }
+  if(new_password.length < 6){ toast('⚠ New password must be at least 6 characters'); return; }
+  if(new_password !== confirm_password){ toast('⚠ New passwords do not match'); return; }
+  const res = await fetch('/api/household/change-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({old_password,new_password,confirm_password})});
+  const data = await res.json();
+  toast(data.success ? '✅ '+data.message : '❌ '+data.message);
+  if(data.success){ document.getElementById('oldPw').value=''; document.getElementById('newPw').value=''; document.getElementById('confPw').value=''; }
+}
+let map, marker; const DEFAULT_LAT = 11.2588, DEFAULT_LNG = 75.7804;
+function initMap(){
+  const latlngText = document.getElementById('latlngText').textContent.trim();
+  let lat=DEFAULT_LAT,lng=DEFAULT_LNG;
+  try{ const p=latlngText.split(','); if(p.length===2){lat=parseFloat(p[0]); lng=parseFloat(p[1]);} }catch(e){}
+  map = L.map('map').setView([lat,lng],15);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  marker = L.marker([lat,lng]).addTo(map).bindPopup(`House Location`).openPopup();
+}
+function openInMaps(){ const txt=document.getElementById('latlngText').textContent.trim(); window.open(`https://www.google.com/maps/search/?api=1&query=${txt}`,'_blank'); }
+function getDirections(){ const txt=document.getElementById('latlngText').textContent.trim(); window.open(`https://www.google.com/maps/dir/?api=1&destination=${txt}`,'_blank'); }
+function copyLocation(){ const txt=document.getElementById('latlngText').textContent.trim(); navigator.clipboard.writeText(txt).then(()=>toast('📋 Copied: '+txt)); }
+document.addEventListener('DOMContentLoaded', initMap);
+</script>
+</body>
+</html>

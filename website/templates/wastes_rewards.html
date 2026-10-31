@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Waste Categories - EcoCycle Admin</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pending_households.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/add_worker.css') }}" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+.cat-table{width:100%; border-collapse:collapse; margin-top:10px;}
+.cat-table th{text-align:left; padding:12px 16px; background:#FAF7EE; border-bottom:1px solid #E6E0D0; font-family:'JetBrains Mono'; font-size:12px; letter-spacing:0.5px; color:#6B6B6B;}
+.cat-table td{padding:14px 16px; border-bottom:1px solid #F0EDE1; font-size:14px; font-family:'Inter';}
+.pts-badge{background:#E3F0EC; color:#2A6B5E; padding:4px 10px; border-radius:20px; font-family:'JetBrains Mono'; font-size:12px; font-weight:600;}
+.id-badge{background:#FAF7EE; border:1px solid #E6E0D0; color:#8C7A5B; padding:4px 10px; border-radius:20px; font-family:'JetBrains Mono'; font-size:12px; font-weight:600;}
+
+  /* Action Buttons */
+.action-cell{display:flex; gap:8px; align-items:center;}
+.btn-edit,.btn-delete{
+    text-decoration:none; padding:6px 14px; border-radius:8px; font-family:'JetBrains Mono';
+    font-size:11px; font-weight:600; letter-spacing:0.5px; transition:0.2s; display:inline-block;
+  }
+.btn-edit{background:#E3F0EC; border:1px solid #A7D8C8; color:#1B5E20;}
+.btn-edit:hover{background:#C8E6D5; border-color:#2A6B5E;}
+.btn-delete{background:#FEF2F2; border:1px solid #FECACA; color:#991B1B;}
+.btn-delete:hover{background:#FEE2E2; border-color:#F87171;}
+  </style>
+</head>
+<body>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in messages %}
+    <div id="flash-popup" style="position:fixed; top:20px; right:20px; background:#1B5E20; color:white; padding:12px 20px; border-radius:8px; z-index:9999; font-family:'JetBrains Mono';">{{ msg }}</div>
+    <script>setTimeout(()=>{let e=document.getElementById('flash-popup'); if(e) e.style.display='none'},3000)</script>
+  {% endfor %}
+{% endwith %}
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon">EC</div><span>EcoCycle Admin</span></div>
+    <nav class="sidebar-nav">
+      <p class="nav-section">OVERVIEW</p>
+      <a href="{{ url_for('admin_dashboard') }}" class="nav-item">Dashboard</a>
+      <p class="nav-section">CONFIGURATION</p>
+      <a href="{{ url_for('recycled_products') }}" class="nav-item">Recycled Products</a>
+      <a href="{{ url_for('wastes_rewards') }}" class="nav-item active">Waste Categories</a>
+            <p class="nav-section">REVENUE</p>
+
+      <a href="{{ url_for('admin_viewinventory') }}" class="nav-item">Inventory</a>
+         <a href="{{ url_for('admin_viewsales') }}" class="nav-item">Sales Log</a>
+
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="main-header">
+      <div>
+        <h1 class="page-title">Waste Categories & Rewards</h1>
+      </div>
+    </header>
+
+    <!-- ADD / EDIT CARD -->
+    <section class="form-card" style="margin-bottom:24px;">
+      <div class="form-head">
+        <div>
+          <h2>{% if edit_cat %}Edit Category{% else %}Add Category & its points{% endif %}</h2>
+          <p>{% if edit_cat %}Update category details{% else %}Add new waste type and reward points{% endif %}</p>
+        </div>
+        <span class="ward-pill">{% if edit_cat %}EDITING #{{ edit_cat.category_id }}{% else %}NEW CATEGORY{% endif %}</span>
+      </div>
+
+      <form method="POST" action="{% if edit_cat %}/wastes_rewards/edit/{{ edit_cat.category_id }}{% else %}/wastes_rewards{% endif %}" class="form-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Category Name <span class="req">*</span></label>
+            <input type="text" name="category_name" required minlength="2" placeholder="e.g. Plastic, Organic, Metal" value="{% if edit_cat %}{{ edit_cat.category_name }}{% endif %}">
+          </div>
+          <div class="form-group">
+            <label>Points per KG <span class="req">*</span></label>
+            <input type="number" name="points_per_kg" required min="0" placeholder="e.g. 10" value="{% if edit_cat %}{{ edit_cat.points_per_kg }}{% endif %}">
+            <span class="helper">Worker gets auto-calculated points</span>
+          </div>
+        </div>
+        <div class="form-footer">
+          {% if edit_cat %}
+            <a href="/wastes_rewards" class="btn-secondary">CANCEL</a>
+            <button type="submit" class="btn-primary">UPDATE →</button>
+          {% else %}
+            <span></span>
+            <button type="submit" class="btn-primary">ADD CATEGORY →</button>
+          {% endif %}
+        </div>
+      </form>
+    </section>
+
+    <!-- VIEW CARD -->
+    <section class="form-card">
+      <div class="form-head">
+        <div>
+          <h2>All Categories</h2>
+          <p>{{ cats|length }} categories configured</p>
+        </div>
+        <span class="ward-pill">{{ cats|length }} TOTAL</span>
+      </div>
+
+      <div style="padding:0 10px 20px;">
+        <div class="table-wrap">
+          <table class="cat-table">
+            <thead>
+              <tr><th>ID</th><th>Category Name</th><th>Points / KG</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+              {% for c in cats %}
+              <tr>
+                <td><span class="id-badge">#{{ c.category_id }}</span></td>
+                <td>
+                  <div class="worker-cell" style="display:flex; align-items:center; gap:8px;">
+                    <div class="worker-avatar" style="background:#2A6B5E; color:white; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:600;">{{ c.category_name[0]|upper }}</div>
+                    <div class="worker-meta"><span class="w-name" style="font-weight:500;">{{ c.category_name }}</span></div>
+                  </div>
+                </td>
+                <td><span class="pts-badge">{{ c.points_per_kg }} pts</span></td>
+                <td>
+                  <div class="action-cell">
+                    <a href="{{ url_for('wastes_rewards') }}?edit={{ c.category_id }}" class="btn-edit">EDIT</a>
+                    <a href="{{ url_for('delete_wastes_rewards', cid=c.category_id) }}" class="btn-delete" onclick="return confirm('Delete {{ c.category_name }}?')">DELETE</a>
+                  </div>
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="4" style="text-align:center; padding:30px; color:#7A8A83;">No categories yet. Add one above.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+</body>
+</html>

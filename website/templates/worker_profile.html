@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Worker Profile - EcoCycle</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--panel:#fff;--line:#E4DFD3;--text:#26241E;--dim:#726D5E;--primary:#3D5A80;--bg:#F5F3EE;--danger:#C94A3A}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);font-family:'Manrope',sans-serif;color:var(--text)}
+.wrap{max-width:800px;margin:30px auto;padding:20px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:28px;margin-bottom:18px}
+.avatar{width:72px;height:72px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:28px}
+.row{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px dashed var(--line);font-size:14px}
+.k{color:var(--dim)} .v{font-weight:700}
+a.btn{display:inline-block;margin-top:20px;padding:10px 18px;border-radius:999px;background:var(--primary);color:#fff;text-decoration:none;font-weight:700;font-size:13px}
+.section-title{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--dim);margin-bottom:14px}
+.pw-group{margin-bottom:14px}
+.pw-group label{display:block;font-size:12px;font-weight:700;margin-bottom:6px;text-transform:uppercase;color:var(--dim)}
+.pw-wrap{position:relative}
+.pw-wrap input{width:100%;padding:11px 40px 11px 14px;border:1.5px solid var(--line);border-radius:10px;font-family:'Manrope';font-size:14px}
+.pw-wrap input:focus{outline:none;border-color:var(--primary)}
+.eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:16px}
+.btn-pw{width:100%;padding:12px;background:var(--primary);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;margin-top:6px}
+.btn-pw:hover{filter:brightness(.92)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:#1E201D;color:#fff;padding:12px 22px;border-radius:24px;font-size:14px;opacity:0;transition:.3s;z-index:999}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div style="display:flex;gap:16px;align-items:center;margin-bottom:18px">
+      <div class="avatar">{{ worker['full_name'][0]|upper }}</div>
+      <div><h2 style="margin:0">{{ worker['full_name'] }}</h2><small style="color:#726D5E">Worker #W{{ worker['worker_id'] }} · Ward {{ worker['ward_no'] }} - {{ worker['area'] }}</small></div>
+    </div>
+    <div class="row"><span class="k">Email</span><span class="v">{{ worker['email'] }}</span></div>
+    <div class="row"><span class="k">Phone</span><span class="v">{{ worker['phone'] }}</span></div>
+    <div class="row"><span class="k">Area</span><span class="v">{{ worker['area'] }}</span></div>
+    <div class="row"><span class="k">Ward No</span><span class="v">{{ worker['ward_no'] }}</span></div>
+    <div class="row"><span class="k">Daily Limit</span><span class="v">{{ worker['daily_limit'] }} houses</span></div>
+    <div class="row"><span class="k">Shift</span><span class="v">{{ worker['shift_start'] }} - {{ worker['shift_end'] }}</span></div>
+    <div class="row"><span class="k">Qualification</span><span class="v">{{ worker['qualification'] }}</span></div>
+    <a class="btn" href="/worker_dashboard">← Back to Dashboard</a>
+    <a class="btn" style="background:#fff;color:var(--text);border:1px solid var(--line);margin-left:8px" href="/logout">Logout</a>
+  </div>
+
+  <!-- Change Password Card -->
+  <div class="card">
+    <div class="section-title">🔑 Change Password</div>
+    <div class="pw-group">
+      <label>Current Password</label>
+      <div class="pw-wrap">
+        <input type="password" id="oldPw" placeholder="Enter current password">
+        <span class="eye" onclick="toggleEye('oldPw',this)">👁️</span>
+      </div>
+    </div>
+    <div class="pw-group">
+      <label>New Password</label>
+      <div class="pw-wrap">
+        <input type="password" id="newPw" placeholder="Min. 6 characters">
+        <span class="eye" onclick="toggleEye('newPw',this)">👁️</span>
+      </div>
+    </div>
+    <div class="pw-group">
+      <label>Confirm New Password</label>
+      <div class="pw-wrap">
+        <input type="password" id="confPw" placeholder="Repeat new password">
+        <span class="eye" onclick="toggleEye('confPw',this)">👁️</span>
+      </div>
+    </div>
+    <button class="btn-pw" onclick="changePassword()">Change Password</button>
+  </div>
+</div>
+<div id="toast" class="toast"></div>
+<script>
+function toggleEye(id, el){ const inp=document.getElementById(id); inp.type=inp.type==='password'?'text':'password'; el.textContent=inp.type==='password'?'👁️':'🙈'; }
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3500); }
+async function changePassword(){
+  const old_password = document.getElementById('oldPw').value;
+  const new_password = document.getElementById('newPw').value.trim();
+  const confirm_password = document.getElementById('confPw').value.trim();
+  if(!old_password){ toast('⚠ Enter your current password'); return; }
+  if(new_password.length < 6){ toast('⚠ New password must be at least 6 characters'); return; }
+  if(new_password !== confirm_password){ toast('⚠ New passwords do not match'); return; }
+  const res = await fetch('/api/worker/change-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({old_password,new_password,confirm_password})});
+  const data = await res.json();
+  toast(data.success ? '✅ '+data.message : '❌ '+data.message);
+  if(data.success){ document.getElementById('oldPw').value=''; document.getElementById('newPw').value=''; document.getElementById('confPw').value=''; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Recycling Staff - EcoCycle Admin</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pending_households.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/view_workers.css') }}" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="app">
+  <!-- <aside class="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon">EC</div><span>EcoCycle Admin</span></div>
+    <nav class="sidebar-nav">
+      <p class="nav-section">OVERVIEW</p>
+      <a href="/admin_dashboard" class="nav-item">Dashboard</a>
+      <p class="nav-section">WORKFORCE</p>
+      <a href="/view_staff" class="nav-item active">Recycling Staff</a>
+      <a href="/add_staff" class="nav-item">Add Recycling Staff</a>
+    </nav>
+  </aside> -->
+
+  <main class="main">
+  
+    <div style="margin-bottom:12px;">
+      <a href="/admin_dashboard" style="display:inline-flex; align-items:center; gap:6px; background:#141413; border:1px solid #E6E0D0; padding:8px 14px; border-radius:8px; text-decoration:none; font-family:'JetBrains Mono'; font-size:12px; color:#ffffff;">← Back</a>
+    </div>
+    <header class="main-header" style="border:none;">
+      <div>
+        <h1 class="page-title" style="font-family:'Fraunces', serif; font-size:36px; font-weight:700;">Recycling Center Staffs</h1>
+        <p class="page-subtitle">STAFF MANAGEMENT · {{ staffs|length }} TOTAL STAFF</p>
+      </div>
+      <a href="/add_staff" class="btn-primary" style="text-decoration:none; background:#10201A; color:white; padding:10px 18px; border-radius:10px; font-family:'JetBrains Mono'; font-size:12px;">+ ADD STAFF</a>
+    </header>
+
+    <!-- Search bar like workers -->
+    <div class="filter-bar" style="display:flex; gap:12px; margin:20px 0;">
+      <div style="flex:1; background:white; border:1px solid #E6E0D0; border-radius:10px; padding:10px 14px; display:flex; align-items:center; gap:8px;">
+        <span>🔍</span>
+        <input id="searchInput" type="text" placeholder="Search staff..." style="border:none; outline:none; width:100%; font-family:'JetBrains Mono'; font-size:13px;">
+      </div>
+    </div>
+
+    <section class="table-card" style="background:white; border-radius:16px; border:1px solid #E6E0D0; overflow:hidden;">
+      <div class="table-wrap">
+        <table class="custom-table" style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr style="background:#FFFCF5; text-align:left; font-family:'JetBrains Mono'; font-size:11px; color:#8A7E6A; letter-spacing:0.5px;">
+              <th style="padding:14px 16px;">WORKER ID</th>
+              <th>FULL NAME</th>
+              <th>EMAIL</th>
+              <th>PHONE</th>
+              <th>STREET</th>
+              <th>CITY</th>
+              <th>DISTRICT</th>
+              <th>PINCODE</th>
+              <th>ID PROOF</th>
+              <th>QUALIFICATION</th>
+              <th>JOINED</th>
+              <th>ACTION</th>
+            </tr>
+          </thead>
+          <tbody id="staffTable">
+  {% for s in staffs %}
+  <tr style="border-top:1px solid #F0EBDD; font-family:'Inter'; font-size:13px;">
+    <td style="padding:16px;">{{ s['staff_id'] }}</td>
+    <td><b>{{ s['full_name'] }}</b></td>
+    <td>{{ s['email'] }}</td>
+    <td>{{ s['phone'] }}</td>
+    <td>{{ s['street'] }}</td>
+    <td>{{ s['city'] }}</td>
+    <td>{{ s['district'] }}</td>
+    <td>{{ s['pincode'] }}</td>
+  <td>
+    {% if s['id_proof'] %}
+      <a href="/view_aadhaar/staff/{{ s['staff_id'] }}">View</a>
+    {% else %}
+      <span style="color:#999; font-size:11px;">No file</span>
+    {% endif %}
+  </td>             
+    <td>{{ s['qualification'] }}</td>
+    <td style="font-family:'JetBrains Mono'; font-size:11px;">{{ s['created_at'] }}</td>
+    <td>
+      <div style="display:flex; gap:6px;">
+        <a href="/edit_staff/{{ s['staff_id'] }}" style="border:1px solid #2E7D32; color:#2E7D32; padding:4px 12px; border-radius:8px; text-decoration:none; font-size:11px; font-family:'JetBrains Mono';">Edit</a>
+        <a href="/delete_staff/{{ s['staff_id'] }}" onclick="return confirm('Delete {{ s['full_name'] }}?')" style="border:1px solid #C62828; color:#C62828; padding:4px 12px; border-radius:8px; text-decoration:none; font-size:11px; font-family:'JetBrains Mono';">Delete</a>
+      </div>
+    </td>
+  </tr>
+  {% endfor %}
+</tbody>
+        </table>
+        {% if not staffs %}
+        <div style="text-align:center; padding:40px; color:#999; font-family:'JetBrains Mono';">No staff added yet.</div>
+        {% endif %}
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+document.getElementById('searchInput').addEventListener('keyup', function() {
+  let filter = this.value.toLowerCase();
+  let rows = document.querySelectorAll('#staffTable tr');
+  rows.forEach(row => {
+    let text = row.innerText.toLowerCase();
+    row.style.display = text.includes(filter)? '' : 'none';
+  });
+});
+</script>
+</body>
+</html>

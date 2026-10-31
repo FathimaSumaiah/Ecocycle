@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>All Disposal Logs - EcoCycle</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#F4F5F1;--panel:#FFFFFF;--panel-raised:#F8F9F6;--line:#E4E7E0;--text:#1E201D;--text-dim:#6B716A;--text-faint:#9AA096;--amber:#C17F1A;--amber-dim:#FEF3E0;--red:#B94E33;--red-dim:#FDECE8;--glass:#5A8A3A;--glass-dim:#EAF2E3;}
+  *{box-sizing:border-box;} body{margin:0;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;}
+  .wrap{max-width:1320px;margin:0 auto;padding:22px 26px 60px;}
+  header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px;background:var(--panel);border-radius:8px;padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);border:1px solid var(--line);}
+  .brand-block{display:flex;align-items:center;gap:14px;}
+  .brand-mark{width:42px;height:42px;border:2px solid var(--amber);border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:'Oswald';font-weight:700;font-size:15px;color:var(--amber);background:var(--amber-dim);}
+  .brand-text h1{font-family:'Oswald';font-weight:700;font-size:22px;margin:0;text-transform:uppercase;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.04);}
+  .card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px;}
+  .card-head h2{font-family:'Oswald';font-size:16px;text-transform:uppercase;letter-spacing:1px;margin:0;}
+  .filter-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .form-select,.form-input{padding:8px 12px;background:#fff;color:var(--text);border:1px solid var(--line);border-radius:6px;font-size:13px;outline:none;}
+  .btn-filter{background:#1E201D;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-family:'JetBrains Mono';font-size:12px;font-weight:700;cursor:pointer;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead th{text-align:left;font-family:'JetBrains Mono';font-size:10.5px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-faint);font-weight:500;padding:10px;border-bottom:1px solid var(--line);}
+  tbody td{padding:12px 10px;border-bottom:1px solid rgba(0,0,0,0.05);vertical-align:middle;}
+  .weight-cell{font-family:'JetBrains Mono';font-weight:700;}
+  .time-cell{font-family:'JetBrains Mono';color:var(--text-faint);font-size:12px;}
+  .select{padding:8px 12px;border:1px solid var(--line);border-radius:6px;background:#fff;min-width:200px;font-size:13px;}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header>
+  <div class="brand-block">
+    <div class="brand-mark">EC</div>
+    <div class="brand-text">
+      <h1>Recycling Center</h1>
+      <div style="font-family:'JetBrains Mono';font-size:11px;color:var(--text-faint);">Facility Dashboard · All Disposal Logs</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <div style="text-align:right;">
+      <div style="font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:1px;">Logged in</div>
+      <div style="font-family:'JetBrains Mono';font-size:14px;margin-top:3px;">{{ staff_name }}</div>
+      <div style="display:flex; gap:6px; margin-top:6px; justify-content:flex-end; flex-wrap:wrap;">
+        <a href="/recycling_dashboard" style="text-decoration:none; background:#1A3C34; color:#fff; font-weight:700; border-radius:20px; padding:6px 14px; font-family:'JetBrains Mono'; font-size:11px;">🏠 Dashboard</a>
+        <a href="/staff/totalwastes" style="text-decoration:none; background:#1A3C34; color:#fff; font-weight:700; border-radius:20px; padding:6px 14px; font-family:'JetBrains Mono'; font-size:11px;">📦 Collection History</a>
+        <a href="/staff/recycling_log" style="text-decoration:none; background:#5A8A3A; color:#fff; font-weight:700; border-radius:20px; padding:6px 14px; font-family:'JetBrains Mono'; font-size:11px;">♻ Recycling Log</a>
+        <a href="/staff/sales" style="text-decoration:none; background:#C17F1A; color:#fff; font-weight:700; border-radius:20px; padding:6px 14px; font-family:'JetBrains Mono'; font-size:11px;">💰 Sales Log</a>
+        <a href="/all_disposals" style="text-decoration:none; background:#B94E33; color:#fff; font-weight:700; border-radius:20px; padding:6px 14px; font-family:'JetBrains Mono'; font-size:11px; box-shadow:0 0 0 2px #1E201D, 0 2px 8px rgba(0,0,0,0.3); border:1px solid #fff;">🗑 Disposal Log</a>
+      </div>
+    </div>
+    <a href="{{ url_for('staff_profile') }}" style="width:44px;height:44px;border-radius:50%;background:var(--panel-raised);border:2px solid var(--amber);display:grid;place-items:center;text-decoration:none;color:var(--amber);font-size:20px;">👤</a>
+  </div>
+</header>
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    {% for m in messages %}
+      <div style="background:#1E201D; color:#fff; padding:10px 16px; border-radius:6px; margin-bottom:14px; font-size:13px;">{{ m }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<!-- New Disposal Entry Form Card -->
+<div class="card" style="margin-bottom:16px; border-left:4px solid var(--red);">
+  <h3 style="font-family:'Oswald'; color:var(--red); margin:0 0 12px; font-size:16px; text-transform:uppercase;">🗑 Add New Waste Disposal</h3>
+  <form method="POST" action="{{ url_for('add_disposal') }}" onsubmit="return validateDisposalForm()" style="display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end;">
+    <div style="flex:1; min-width:200px;">
+      <label style="font-size:10px; font-family:'JetBrains Mono'; color:var(--text-faint); display:block; margin-bottom:4px; text-transform:uppercase;">Disposal Waste Category *</label>
+      <select name="category_id" id="dispCategory" required class="form-select" style="width:100%;">
+        <option value="">Select waste category</option>
+        {% for cat in disposal_categories %}
+        <option value="{{ cat['category_id'] }}">{{ cat['category_name'] }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div style="width:140px;">
+      <label style="font-size:10px; font-family:'JetBrains Mono'; color:var(--text-faint); display:block; margin-bottom:4px; text-transform:uppercase;">Weight KG *</label>
+      <input type="number" step="0.01" min="0.01" name="qty_kg" id="dispQtyKg" required placeholder="e.g. 5.5" class="form-input" style="width:100%;">
+    </div>
+    <div style="flex:1.5; min-width:220px;">
+      <label style="font-size:10px; font-family:'JetBrains Mono'; color:var(--text-faint); display:block; margin-bottom:4px; text-transform:uppercase;">Reason / Notes</label>
+      <input type="text" name="reason" placeholder="Damaged / Expired / Non-usable" class="form-input" style="width:100%;">
+    </div>
+    <div>
+      <button type="submit" style="background:var(--red); color:#fff; border:none; padding:9px 18px; border-radius:6px; font-weight:700; font-size:13px; cursor:pointer;">Dispose Waste Now →</button>
+    </div>
+  </form>
+</div>
+
+<div class="card" style="margin-bottom:14px;">
+<div class="card-head">
+  <span style="font-family:'JetBrains Mono'; font-size:11px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.5px;">Filter By Waste Category</span>
+  <span style="font-family:'JetBrains Mono';font-size:11px;color:var(--text-faint);">{{ logs|length }} records found</span>
+</div>
+<form method="GET" class="filter-bar">
+<select name="category_id" class="form-select" onchange="this.form.submit()">
+<option value="">All Categories — {{ disposal_categories|length }} types</option>
+{% for cat in disposal_categories %}
+<option value="{{ cat['category_id'] }}" {% if selected_category and selected_category|string == cat['category_id']|string %}selected{% endif %}>{{ cat['category_name'] }}</option>
+{% endfor %}
+</select>
+{% if selected_category %}<a href="{{ url_for('all_disposals') }}" style="font-size:12px;color:var(--red);font-weight:600;text-decoration:none;">✕ Clear Filter</a>{% endif %}
+</form>
+</div>
+
+<div class="card">
+<table>
+<thead>
+  <tr>
+    <th>Date &amp; Time</th>
+    <th>Waste Type</th>
+    <th>Kg</th>
+    <th>Handled By Staff</th>
+    <th>Reason / Description</th>
+    <th>Action</th>
+  </tr>
+</thead>
+<tbody>
+{% for d in logs %}
+<tr>
+  <td class="time-cell">
+    {{ d['created_at'].strftime('%d %b %Y') if d['created_at'] else '' }}<br>
+    <small style="color:var(--text-faint);">{{ d['created_at'].strftime('%I:%M %p') if d['created_at'] else '' }}</small>
+  </td>
+  <td><b style="color:var(--red);">{{ d['category_name'] }}</b></td>
+  <td class="weight-cell" style="color:var(--red);">{{ d['qty_kg'] }} kg</td>
+  <td style="color:var(--text-dim);">{{ d['staff_name'] }}</td>
+  <td style="font-family:'JetBrains Mono'; font-size:11px; color:var(--text-dim);">{{ d['reason'] or '-' }}</td>
+  <td>
+    <a href="/staff/delete_disposal/{{ d['id'] }}" onclick="return confirm('Are you sure you want to delete this disposal record #{{ d['id'] }}?');" style="background:var(--red); color:#fff; text-decoration:none; padding:4px 9px; border-radius:4px; font-weight:700; font-size:11px; display:inline-block;">🗑 Delete</a>
+  </td>
+</tr>
+{% else %}
+<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-faint);">No disposal logs found — add a disposal using the form above.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+</div>
+
+<script>
+function validateDisposalForm() {
+  const cat = document.getElementById('dispCategory');
+  const kg = document.getElementById('dispQtyKg');
+  if (!cat.value) {
+    alert('Please select a Waste Category.');
+    cat.style.border = '2px solid var(--red)';
+    cat.focus();
+    return false;
+  }
+  cat.style.border = '1px solid var(--line)';
+  const kgVal = parseFloat(kg.value || 0);
+  if (isNaN(kgVal) || kgVal <= 0) {
+    alert('Please enter a valid Weight (greater than 0 kg).');
+    kg.style.border = '2px solid var(--red)';
+    kg.focus();
+    return false;
+  }
+  kg.style.border = '1px solid var(--line)';
+  return true;
+}
+</script>
+</body>
+</html>

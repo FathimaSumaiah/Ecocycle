@@ -1,0 +1,48 @@
+/* Household Profile CSS - matches dashboard theme */
+.profile-header { display:flex; gap:18px; align-items:center; background:#FFFCF5; border:1px solid #E6E0D0; border-radius:16px; padding:20px 24px; margin-bottom:20px; }
+.profile-avatar-large { width:64px; height:64px; border-radius:50%; background:#C67F2A; color:#fff; display:grid; place-items:center; font-weight:700; font-size:22px; flex-shrink:0; }
+.profile-header h1 { font-size:28px; }
+.profile-two-col { display:grid; grid-template-columns:1.2fr 0.8fr; gap:20px; align-items:start; }
+.profile-card .profile-form { padding:18px 20px; display:flex; flex-direction:column; gap:18px; }
+.form-group label { font-weight:600; font-size:13px; display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.edit-badge { background:#DDEAE6; color:#2A6B5E; font-family:'JetBrains Mono'; font-size:10px; padding:2px 8px; border-radius:20px; }
+.lock-badge { background:#F0EDE1; color:#7A8A83; font-family:'JetBrains Mono'; font-size:10px; padding:2px 8px; border-radius:20px; }
+.input-with-btn { display:flex; gap:10px; }
+.input-with-btn input { flex:1; padding:12px 14px; border:2px solid #2A6B5E; border-radius:10px; font-family:'Inter'; font-size:14px; }
+.input-with-btn input:focus { outline:none; border-color:#1A2A24; }
+.btn-save { background:#1A2A24; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-family:'JetBrains Mono'; font-size:12px; cursor:pointer; }
+.btn-save:hover { background:#2F4D44; }
+.locked-field { display:flex; align-items:center; gap:10px; background:#FAF7EE; border:1px solid #E6E0D0; border-radius:10px; padding:12px 14px; }
+.locked-field input { border:none; background:transparent; flex:1; font-size:14px; color:#5A6A65; font-family:'Inter'; }
+.locked-field input:disabled { color:#5A6A65; }
+.helper { margin-top:6px; }
+.divider { height:1px; background:#E6E0D0; margin:4px 0; }
+.right-stack { display:flex; flex-direction:column; gap:18px; }
+.aadhaar-box { padding:16px 20px; }
+.aadhaar-img-wrap { position:relative; background:#F0EDE1; border:1px dashed #C9C3B1; border-radius:12px; height:200px; display:grid; place-items:center; overflow:hidden; margin-bottom:10px; }
+.aadhaar-img { width:100%; height:100%; object-fit:cover; }
+.aadhaar-placeholder { text-align:center; color:#7A8A83; font-size:14px; font-weight:600; }
+.verified-tag { position:absolute; bottom:8px; right:8px; background:#2A6B5E; color:#fff; font-family:'JetBrains Mono'; font-size:10px; padding:4px 10px; border-radius:20px; }
+.map-box { width:100%; height:240px; background:#E6E0D0; border-bottom:1px solid #E6E0D0; z-index:1; }
+.location-details { padding:14px 18px; display:flex; flex-direction:column; gap:10px; }
+.loc-row { display:flex; justify-content:space-between; gap:12px; font-size:13px; border-bottom:1px dashed #E6E0D0; padding-bottom:8px; }
+.loc-row:last-of-type { border:none; }
+.loc-actions { display:flex; gap:10px; margin-top:6px; }
+.btn-small, .btn-outline { padding:6px 12px; border-radius:20px; font-family:'JetBrains Mono'; font-size:11px; cursor:pointer; }
+.btn-small { background:#1A2A24; color:#fff; border:none; }
+.btn-outline { background:#fff; border:1px solid #E6E0D0; color:#1A2A24; }
+.btn-outline:hover { background:#FFFCF5; }
+@media (max-width:1000px){ .profile-two-col{grid-template-columns:1fr;} .profile-header{flex-direction:column; align-items:flex-start;} }
+.input-with-btn input {
+    flex:1;
+    padding:12px 14px;
+    border:2px solid #2A6B5E;
+    border-radius:10px;
+    font-family:'Inter';
+    font-size:14px;
+}
+
+.input-with-btn input:focus {
+    outline:none;
+    border-color:#1A2A24;
+}

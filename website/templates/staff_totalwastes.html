@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>EcoCycle — Recycling Center Total Wastes</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#F4F5F1;--panel:#FFFFFF;--panel-raised:#F8F9F6;--line:#E4E7E0;--text:#1E201D;--text-dim:#6B716A;--text-faint:#9AA096;--amber:#C17F1A;--glass:#5A8A3A;--glass-dim:#EAF2E3;}
+  *{box-sizing:border-box;} body{margin:0;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;}
+  .wrap{max-width:1320px;margin:0 auto;padding:22px 26px 60px;}
+  header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px;background:var(--panel);border-radius:8px;padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);border:1px solid var(--line);}
+  .brand-block{display:flex;align-items:center;gap:14px;}
+  .brand-mark{width:42px;height:42px;border:2px solid var(--amber);border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:'Oswald';font-weight:700;font-size:15px;color:var(--amber);background:#FEF3E0;}
+  .brand-text h1{font-family:'Oswald';font-weight:700;font-size:22px;margin:0;text-transform:uppercase;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.04);margin-top:20px;}
+  .card-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px;}
+  .card-head h2{font-family:'Oswald';font-size:16px;text-transform:uppercase;letter-spacing:1px;margin:0;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead th{text-align:left;font-family:'JetBrains Mono';font-size:10.5px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-faint);font-weight:500;padding:10px;border-bottom:1px solid var(--line);}
+  tbody td{padding:12px 10px;border-bottom:1px solid rgba(0,0,0,0.05);}
+  .weight-cell{font-family:'JetBrains Mono';font-weight:700;color:var(--glass);}
+  .time-cell{font-family:'JetBrains Mono';color:var(--text-faint);font-size:12px;}
+  .search-input{padding:8px 14px; border:1px solid var(--line); border-radius:6px; font-size:13px; outline:none; width:260px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="brand-block"><div class="brand-mark">EC</div><div class="brand-text"><h1>Recycling Center</h1><div style="font-family:'JetBrains Mono';font-size:11px;color:var(--text-faint);">Facility Dashboard · Total Collected Wastes Log</div></div></div>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <div style="text-align:right;">
+      <div style="font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:1px;">Logged in</div>
+      <div style="font-family:'JetBrains Mono';font-size:14px;margin-top:3px;">{{ staff_name }}</div>
+      <div style="display:flex; gap:6px; margin-top:6px; justify-content:flex-end; flex-wrap:wrap;">
+        <a href="/recycling_dashboard" style="text-decoration:none; background:#1A3C34; color:#fff; font-weight:700; border-radius:20px; padding:6px 14px; font-family:'JetBrains Mono'; font-size:11px;">🏠 Dashboard</a>
+        <a href="/staff/totalwastes" style="text-decoration:none; background:#1A3C34; color:#fff; font-weight:700; border-radius:20px; padding:6px 14px; font-family:'JetBrains Mono'; font-size:11px; box-shadow:0 0 0 2px #1E201D, 0 2px 8px rgba(0,0,0,0.3); border:1px solid #fff;">📦 Collection History</a>
+        <a href="/staff/recycling_log" style="text-decoration:none; background:#5A8A3A; color:#fff; font-weight:700; border-radius:20px; padding:6px 14px; font-family:'JetBrains Mono'; font-size:11px;">♻ Recycling Log</a>
+        <a href="/staff/sales" style="text-decoration:none; background:#C17F1A; color:#fff; font-weight:700; border-radius:20px; padding:6px 14px; font-family:'JetBrains Mono'; font-size:11px;">💰 Sales Log</a>
+        <a href="/all_disposals" style="text-decoration:none; background:#B94E33; color:#fff; font-weight:700; border-radius:20px; padding:6px 14px; font-family:'JetBrains Mono'; font-size:11px;">🗑 Disposal Log</a>
+      </div>
+    </div>
+    <a href="{{ url_for('staff_profile') }}" style="width:44px;height:44px;border-radius:50%;background:var(--panel-raised);border:2px solid var(--amber);display:grid;place-items:center;text-decoration:none;color:var(--amber);font-size:20px;">👤</a>
+  </div>
+</header>
+
+<div style="display:grid; grid-template-columns:repeat(2,1fr); gap:16px; margin-bottom:20px;">
+  <div style="background:#fff; padding:18px; border-radius:8px; border:1px solid var(--line); border-left:4px solid var(--glass);">
+    <div style="font-family:'JetBrains Mono'; font-size:11px; color:var(--text-faint); text-transform:uppercase;">Total All-Time Received Waste</div>
+    <div style="font-family:'Oswald'; font-size:28px; font-weight:700; color:var(--glass); margin-top:4px;">{{ "%.1f"|format(totals['total_kg']|float) }} kg</div>
+  </div>
+  <div style="background:#fff; padding:18px; border-radius:8px; border:1px solid var(--line); border-left:4px solid var(--amber);">
+    <div style="font-family:'JetBrains Mono'; font-size:11px; color:var(--text-faint); text-transform:uppercase;">Total Collection Deliveries</div>
+    <div style="font-family:'Oswald'; font-size:28px; font-weight:700; color:var(--amber); margin-top:4px;">{{ totals['total_cnt'] }} entries</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head">
+    <h2 style="color:var(--glass);">♻ All-Time Waste Collection Records</h2>
+    <input type="text" id="searchInput" class="search-input" placeholder="Search material, worker, household..." onkeyup="filterTable()">
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Date & Time</th>
+        <th>Material</th>
+        <th>Weight (KG)</th>
+        <th>Household</th>
+        <th>Delivered By Worker</th>
+        <th>Ward & Area</th>
+      </tr>
+    </thead>
+    <tbody id="wasteTableBody">
+      {% for row in all_collected_wastes %}
+      <tr data-search="{{ row['category_name']|lower }} {{ (row['worker_name'] or '')|lower }} {{ row['household_name']|lower }} {{ row['area']|lower }}">
+        <td class="time-cell">{{ row['created_at'].strftime('%d %b %Y %I:%M %p') if row['created_at'] else '' }}</td>
+        <td><b>{{ row['category_name'] }}</b></td>
+        <td class="weight-cell">{% if row['weight_details'] and ',' in row['weight_details'] %}{{ row['weight_details'] }} (Total: {{ row['weight_kg']|round(2) }} kg){% elif row['weight_details'] %}{{ row['weight_details'] }}{% else %}{{ row['weight_kg'] }} kg{% endif %}</td>
+        <td>{{ row['household_name'] }} (H.No {{ row['house_no'] }})</td>
+        <td>{{ row['worker_name'] or 'Worker' }}</td>
+        <td>Ward {{ row['ward_no'] }} · {{ row['area'] }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-faint);">No waste collection records found</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+</div>
+<script>
+function filterTable(){
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  document.querySelectorAll('#wasteTableBody tr').forEach(r => {
+    const s = r.dataset.search || '';
+    r.style.display = (!q || s.includes(q)) ? '' : 'none';
+  });
+}
+</script>
+</body>
+</html>

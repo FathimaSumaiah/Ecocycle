@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoCycle Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+<div class="container">
+    <!-- LEFT PANEL - UNCHANGED -->
+    <div class="left-panel">
+        <h1>EcoCycle</h1>
+        <p>Smart Waste Collection,<br>Recycling & Rewards Management System</p>
+    </div>
+
+    <!-- RIGHT PANEL - REDESIGNED -->
+    <div class="right-panel">
+        <div class="login-card">
+            <div class="top-accent"></div>
+            
+            <div class="header-row">
+                <div class="circle"><i class="fa-solid fa-recycle"></i></div>
+                <div>
+                    <h2>Welcome Back!</h2>
+                    <span>Please login to continue</span>
+                </div>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      {% if category == 'success' or category == 'warning' %}
+        <div style="padding:12px; border-radius:10px; margin-bottom:16px; border:1px solid {% if category=='success' %}#2A6B5E{% else %}#E6C78A{% endif %}; background:{% if category=='success' %}#DDEAE6{% else %}#FFF4E5{% endif %}; color:{% if category=='success' %}#1A2A24{% else %}#7A4A00{% endif %};">
+          {{ message }}
+        </div>
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+            <form action="/login" method="POST" class="modern-form">
+                <div class="field">
+                    <label>Email Address</label>
+                    <div class="input-box">
+                        <i class="fa-regular fa-envelope"></i>
+                        <input type="email" name="email" placeholder="you@gmail.com" required>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>Password</label>
+                    <div class="input-box">
+                        <i class="fa-solid fa-lock"></i>
+                        <input id="password" type="password" name="password" placeholder="••••••••" required>
+                        <i class="fa-regular fa-eye" id="eye"></i>
+                    </div>
+                </div>
+
+                <div class="options">
+                    <label class="remember">
+                        <input type="checkbox"><span>Remember Me</span>
+                    </label>
+                    <a href="{{ url_for('forgot_password') }}">Forgot Password?</a>
+                </div>
+
+                <button type="submit" class="login-btn">
+                    <span>Login to EcoCycle</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+
+            <div class="divider"><span>new to ecocycle?</span></div>
+
+            <p class="register">
+                Don't have an account? <a href="/register">Register Now →</a>
+            </p>
+
+            <p class="secure-note"><i class="fa-solid fa-shield-halved"></i> Secured by EcoCycle Panchayat System</p>
+        </div>
+    </div>
+</div>
+<script src="{{ url_for('static', filename='js/login.js') }}"></script>
+</body>
+</html>

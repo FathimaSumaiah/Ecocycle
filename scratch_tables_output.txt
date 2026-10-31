@@ -1,0 +1,103 @@
+=== DETECTED DATABASE TABLES IN PROJECT ===
+
+ACTUAL DATABASE TABLES:
+
+Table: `admin` (5 references)
+   Line 162: cursor.execute("SELECT * FROM admin WHERE email=%s AND password=%s", (email, password))
+   Line 260: cur.execute("SELECT admin_id FROM admin WHERE email=%s", (email,))
+   Line 262: cur.execute("UPDATE admin SET password=%s WHERE email=%s", (password, email))
+
+Table: `areas` (24 references)
+   Line 355: cursor.execute("SELECT DISTINCT ward_no FROM areas ORDER BY ward_no ASC")
+   Line 363: cursor.execute("SELECT area_name FROM areas WHERE ward_no=%s ORDER BY area_name ASC", (ward_no,))
+   Line 426: cursor.execute("SELECT area_name, ward_no FROM areas ORDER BY ward_no ASC, area_name ASC")
+
+Table: `feedbacks` (9 references)
+   Line 635: FROM feedbacks f
+   Line 642: cur.execute("SELECT COUNT(*) as c FROM feedbacks WHERE status='Pending' AND type!='Rating'")
+   Line 645: cur.execute("SELECT COUNT(*) as c FROM feedbacks WHERE status='Resolved' AND type!='Rating'")
+
+Table: `festive_mode` (2 references)
+   Line 715: cur.execute("INSERT INTO system_config (id, festive_mode) VALUES (1,1) ON DUPLICATE KEY UPDATE festive_mode=1")
+   Line 724: cur.execute("INSERT INTO system_config (id, festive_mode) VALUES (1,0) ON DUPLICATE KEY UPDATE festive_mode=0")
+
+Table: `household_users` (72 references)
+   Line 102: JOIN household_users hu ON hu.household_id=pr.household_id
+   Line 170: cursor.execute("SELECT * FROM household_users WHERE email=%s AND password=%s", (email, password))
+   Line 233: cur.execute("SELECT household_id FROM household_users WHERE email=%s", (email,))
+
+Table: `inventory` (15 references)
+   Line 1415: LEFT JOIN inventory i ON i.recycled_id=rp.recycled_id
+   Line 1449: cur.execute("INSERT INTO inventory (recycled_id, stock_kg, unit, status) VALUES (%s,0,%s,'EMPTY')", (new_id, unit))
+   Line 1480: cur.execute("UPDATE inventory SET unit=%s WHERE recycled_id=%s", (unit, rid))
+
+Table: `note` (1 references)
+   Line 1068: print("worker_leaves update note:", e)
+
+Table: `notifications` (8 references)
+   Line 1658: cursor.execute("DELETE FROM notifications WHERE household_id=%s AND (created_at < NOW() - INTERVAL 24 HOUR OR ((title LIKE '%%Leave%%' OR title LIKE '%%leave%%') AND DATE(created_at) < CURDATE()))", (session["household_id"],))
+   Line 1665: FROM notifications
+   Line 1673: FROM notifications
+
+Table: `pickup_requests` (40 references)
+   Line 35: (SELECT COUNT(*) FROM pickup_requests pr
+   Line 54: (SELECT COUNT(*) FROM pickup_requests pr
+   Line 73: SELECT id, household_id FROM pickup_requests
+
+Table: `raw` (1 references)
+   Line 2854: flash("✅ Added to inventory & deducted from raw waste stock!", "success")
+
+Table: `raw_waste_usage_log` (9 references)
+   Line 493: - COALESCE((SELECT SUM(kg_used) FROM raw_waste_usage_log WHERE category_id=wc.category_id),0)
+   Line 504: - COALESCE((SELECT SUM(kg_used) FROM raw_waste_usage_log WHERE category_id=wc.category_id),0)
+   Line 2440: FROM raw_waste_usage_log r
+
+Table: `reassign_logs` (4 references)
+   Line 80: cursor.execute("INSERT INTO reassign_logs (pickup_id, household_id, old_worker_id, new_worker_id, reason) VALUES (%s,%s,%s,%s,%s)",
+   Line 438: FROM reassign_logs rl
+   Line 447: cursor.execute("SELECT COUNT(*) as cnt FROM reassign_logs WHERE DATE(created_at)=CURDATE()")
+
+Table: `recycled_products` (21 references)
+   Line 494: - COALESCE((SELECT SUM(qty_kg) FROM sales_log WHERE type='disposal' AND (recycled_id IN (SELECT recycled_id FROM recycled_products WHERE category_id=wc.category_id) OR buyer_name=wc.category_name OR description LIKE CONCAT('%%',wc.category_name,'%%'))),0)) as total_kg
+   Line 505: - COALESCE((SELECT SUM(qty_kg) FROM sales_log WHERE type='disposal' AND (recycled_id IN (SELECT recycled_id FROM recycled_products WHERE category_id=wc.category_id) OR buyer_name=wc.category_name OR description LIKE CONCAT('%%',wc.category_name,'%%'))),0)) as total_kg
+   Line 1363: LEFT JOIN recycled_products rp ON rp.recycled_id = s.recycled_id
+
+Table: `redeem_requests` (10 references)
+   Line 392: cursor.execute("SELECT COUNT(*) as cnt FROM redeem_requests WHERE status='Pending'")
+   Line 1142: cur.execute("DELETE FROM redeem_requests WHERE household_id=%s", (id,))
+   Line 1509: cur.execute("SELECT rr.id, hu.full_name, hu.house_no, hu.ward_no, hu.area, hu.phone, rr.points_redeemed, rr.rupees, rr.upi_id, rr.status, rr.created_at, rr.txn_id, rr.payment_screenshot FROM redeem_requests rr JOIN household_users hu ON hu.household_id = rr.household_id ORDER BY FIELD(rr.status,'Pending','Credited','Rejected'), rr.created_at DESC")
+
+Table: `reward_logs` (23 references)
+   Line 104: LEFT JOIN reward_logs c ON c.pickup_id=pr.id
+   Line 398: cursor.execute("SELECT COALESCE(SUM(weight_kg),0) as total_kg FROM reward_logs")
+   Line 408: (SELECT COALESCE(SUM(c.weight_kg),0) FROM reward_logs c JOIN household_users hu ON c.household_id=hu.household_id WHERE hu.ward_no=base.ward_no AND DATE(c.created_at)=CURDATE()) as kg_today,
+
+Table: `sales_log` (30 references)
+   Line 494: - COALESCE((SELECT SUM(qty_kg) FROM sales_log WHERE type='disposal' AND (recycled_id IN (SELECT recycled_id FROM recycled_products WHERE category_id=wc.category_id) OR buyer_name=wc.category_name OR description LIKE CONCAT('%%',wc.category_name,'%%'))),0)) as total_kg
+   Line 505: - COALESCE((SELECT SUM(qty_kg) FROM sales_log WHERE type='disposal' AND (recycled_id IN (SELECT recycled_id FROM recycled_products WHERE category_id=wc.category_id) OR buyer_name=wc.category_name OR description LIKE CONCAT('%%',wc.category_name,'%%'))),0)) as total_kg
+   Line 1362: FROM sales_log s
+
+Table: `staff` (19 references)
+   Line 198: cursor.execute("SELECT * FROM staff WHERE email=%s AND password=%s", (email, password))
+   Line 251: cur.execute("SELECT staff_id FROM staff WHERE email=%s", (email,))
+   Line 253: cur.execute("UPDATE staff SET password=%s WHERE email=%s", (password, email))
+
+Table: `system_config` (8 references)
+   Line 26: cursor.execute("SELECT festive_mode FROM system_config WHERE id=1")
+   Line 454: cursor.execute("SELECT festive_mode FROM system_config WHERE id=1")
+   Line 663: cur.execute("SELECT festive_mode FROM system_config WHERE id=1")
+
+Table: `waste_categories` (36 references)
+   Line 105: LEFT JOIN waste_categories wc ON wc.category_id=c.category_id
+   Line 390: cursor.execute("SELECT COUNT(*) as cnt FROM waste_categories")
+   Line 468: LEFT JOIN waste_categories wc ON wc.category_id = c.category_id
+
+Table: `worker_leaves` (18 references)
+   Line 43: AND w.worker_id NOT IN (SELECT worker_id FROM worker_leaves WHERE leave_date=CURDATE() AND status IN ('Accepted','Approved','Pending'))
+   Line 58: AND w.worker_id NOT IN (SELECT worker_id FROM worker_leaves WHERE leave_date=CURDATE() AND status IN ('Accepted','Approved','Pending'))
+   Line 68: FROM worker_leaves wl
+
+Table: `workers` (48 references)
+   Line 39: FROM workers w
+   Line 56: FROM workers w
+   Line 96: SELECT w2.worker_id FROM workers w2

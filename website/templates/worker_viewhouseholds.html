@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>EcoCycle — View Households</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F4F6F8; --panel:#FFFFFF; --panel-soft:#F8FAFC; --line:#E2E8F0;
+    --text:#0F172A; --text-dim:#475569; --text-faint:#94A3B8;
+    --ink:#0F172A; --primary:#1E40AF; --primary-soft:#EFF6FF; --primary-dim:#BFDBFE;
+    --amber:#D97706; --amber-soft:#FEF3C7; --green:#166534; --green-soft:#DCFCE7;
+    --red:#DC2626; --red-soft:#FEE2E2;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background: radial-gradient(circle at 8% 0%, #E0F2FE 0%, transparent 45%), radial-gradient(circle at 100% 10%, #FEF3C7 0%, transparent 40%), linear-gradient(180deg, #F1F5F9 0%, #E2E8F0 100%); background-attachment:fixed; color:var(--text); font-family:'Manrope',sans-serif; min-height:100vh;}
+  .wrap{max-width:1340px; margin:0 auto; padding:22px 26px 60px;}
+  .nav-top{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:18px; padding:12px 18px; border-radius:16px; background:rgba(255,255,255,0.95); backdrop-filter:blur(10px); border:1px solid var(--line); box-shadow:0 4px 20px rgba(15,23,42,0.05);}
+  .nav-links{display:flex; gap:8px; flex-wrap:wrap;}
+  .nav-links a{color:var(--text-dim); font-size:13px; font-weight:700; text-decoration:none; padding:9px 18px; border-radius:999px; background:var(--panel-soft); border:1px solid var(--line); transition:all 0.2s ease;}
+  .nav-links a:hover{background:var(--primary-soft); color:var(--primary); border-color:var(--primary-dim);}
+  .nav-links a.active{background:linear-gradient(135deg,#1E40AF,#2563EB); color:#fff; border-color:transparent; box-shadow:0 4px 12px rgba(37,99,235,0.25);}
+  .nav-right{display:flex; align-items:center; gap:10px;}
+  .profile-chip{display:flex; align-items:center; gap:9px; text-decoration:none; padding:6px 14px 6px 6px; border-radius:999px; background:var(--panel); border:1px solid var(--line); color:var(--ink);}
+  .profile-avatar{width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#1E40AF,#3B82F6); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px;}
+  .logout-btn{color:#fff; font-size:12.5px; font-weight:700; text-decoration:none; padding:9px 18px; border-radius:999px; background:linear-gradient(135deg,#DC2626,#EF4444); box-shadow:0 2px 8px rgba(220,38,38,0.25);}
+  
+  header{display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px; padding:20px 24px; margin-bottom:22px; border-radius:18px; background:rgba(255,255,255,0.95); backdrop-filter:blur(10px); border:1px solid var(--line); box-shadow:0 4px 20px rgba(15,23,42,0.05);}
+  .card{background:rgba(255,255,255,0.95); backdrop-filter:blur(10px); border:1px solid var(--line); border-radius:18px; padding:24px; box-shadow:0 4px 20px rgba(15,23,42,0.04);}
+  .card-head{display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:20px; padding-bottom:12px; border-bottom:1px solid var(--line);}
+  .card-head h2{font-size:16px; font-weight:800; margin:0; color:var(--text);}
+  .search-input{padding:10px 18px; border-radius:999px; border:1px solid var(--line); font-family:'Manrope'; font-size:13px; width:280px; background:var(--panel-soft); outline:none; transition:all 0.2s;}
+  .search-input:focus{border-color:var(--primary); background:#fff;}
+  table{width:100%; border-collapse:collapse;}
+  th{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-faint); text-align:left; padding:14px; border-bottom:1px solid var(--line); text-transform:uppercase; letter-spacing:0.6px; background:var(--panel-soft);}
+  td{padding:14px; font-size:13.5px; border-bottom:1px solid var(--line); vertical-align:middle;}
+  tr:hover td{background:#F8FAFC;}
+  .avatar-small{width:34px; height:34px; border-radius:50%; background:var(--amber-soft); color:var(--amber); display:grid; place-items:center; font-weight:800; font-size:13px; flex-shrink:0;}
+  .house-pill{font-family:'JetBrains Mono',monospace; background:var(--amber-soft); border:1px solid #FDE68A; color:#92400E; padding:5px 12px; border-radius:999px; font-size:11.5px; font-weight:700;}
+  .wallet-pill{background:var(--green-soft); color:var(--green); border:1px solid #86EFAC; padding:5px 12px; border-radius:999px; font-size:11.5px; font-weight:800; font-family:'JetBrains Mono',monospace;}
+  .loc-btn{background:var(--primary-soft); color:var(--primary); padding:7px 16px; border-radius:999px; font-size:12px; text-decoration:none; border:1px solid var(--primary-dim); font-weight:700; display:inline-block;}
+  .loc-btn:hover{background:var(--primary); color:#fff;}
+  .no-gps{font-size:11.5px; color:var(--text-faint); background:var(--panel-soft); padding:5px 12px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono',monospace;}
+  .btn-back{background:#0F172A; color:#fff; padding:10px 18px; border-radius:10px; text-decoration:none; font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; transition:all 0.15s ease;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="nav-top">
+    <div class="nav-links">
+      <a href="/worker_dashboard">🚚 Dashboard</a>
+      <a href="/worker_viewhouseholds" class="active">👥 Households ({{ all_households|length }})</a>
+      <a href="/worker_viewhistory">📦 Collection History</a>
+      <a href="/worker/leave_dates" style="background:#0F172A; color:#fff; border-color:#0F172A;">📅 Leave Log History</a>
+    </div>
+    <div class="nav-right">
+      <a class="profile-chip" href="/worker_profile">
+        <span class="profile-avatar">{{ worker['full_name'][0]|upper }}</span>
+        <span>
+          <div style="font-size:13px; font-weight:800; color:var(--text);">{{ worker['full_name'] }}</div>
+          <div style="font-size:10.5px; color:var(--text-dim); font-weight:600;">{{ worker['area'] }} • Ward {{ worker['ward_no'] }}</div>
+        </span>
+      </a>
+      <a class="logout-btn" href="/logout">Logout</a>
+    </div>
+  </div>
+
+  <header>
+    <div style="display:flex; gap:16px; align-items:center;">
+      <div style="width:48px; height:48px; border-radius:14px; background:linear-gradient(135deg,#1E40AF,#2563EB); color:#fff; display:grid; place-items:center; font-weight:800; font-size:16px; box-shadow:0 4px 12px rgba(30,64,175,0.3);">EC</div>
+      <div>
+        <h1 style="margin:0; font-size:20px; font-weight:800; color:var(--text);">View Area Households</h1>
+        <div style="font-size:12.5px; color:var(--text-dim); margin-top:3px; font-weight:600;">Ward {{ worker.ward_no }} — {{ worker.area }} · {{ today_date }} · {{ all_households|length }} TOTAL HOUSES</div>
+      </div>
+    </div>
+    <a href="/worker_dashboard" class="btn-back">← BACK TO PICKUPS</a>
+  </header>
+
+  <div class="card">
+    <div class="card-head">
+      <h2>👥 Registered Households in {{ worker.area }}</h2>
+      <input type="text" id="houseSearch" class="search-input" placeholder="Search name / house no..." onkeyup="filterHouse()">
+    </div>
+    <div style="overflow-x:auto;">
+      <table id="houseTable">
+        <thead><tr><th>HOUSEHOLD NAME</th><th>HOUSE NO</th><th>PHONE</th><th>EMAIL</th><th>WALLET</th><th>GPS LOCATION</th></tr></thead>
+        <tbody>
+          {% for h in all_households %}
+          <tr>
+            <td>
+              <div style="display:flex; gap:12px; align-items:center;">
+                <div class="avatar-small">{{ h.full_name[0]|upper }}</div>
+                <div><b style="font-size:14px;">{{ h.full_name }}</b><br><small style="font-family:'JetBrains Mono'; color:var(--text-faint); font-size:11px;">#{{ h.household_id }}</small></div>
+              </div>
+            </td>
+            <td><span class="house-pill">House {{ h.house_no }}</span></td>
+            <td style="font-family:'JetBrains Mono',monospace; font-weight:600;">{{ h.phone }}</td>
+            <td style="font-size:13px; color:var(--text-dim);">{{ h.email }}</td>
+            <td><span class="wallet-pill">🌿 {{ h.reward_wallet or 0 }} pts</span></td>
+            <td>{% if h.latitude and h.longitude %}<a href="https://www.google.com/maps?q={{ h.latitude }},{{ h.longitude }}" target="_blank" class="loc-btn">🗺 View GPS ↗</a>{% else %}<span class="no-gps">No GPS</span>{% endif %}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" style="text-align:center; padding:40px; color:var(--text-faint);">No households found in {{ worker.area }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+<script>function filterHouse(){let v=document.getElementById("houseSearch").value.toLowerCase();document.querySelectorAll("#houseTable tbody tr").forEach(r=>{r.style.display=r.innerText.toLowerCase().includes(v)?"":"none"})} </script>
+</body>
+</html>

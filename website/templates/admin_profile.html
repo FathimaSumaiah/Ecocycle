@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Profile</title>
+  <style>
+    body{margin:0;background:#f0f4f0;font-family:Inter,sans-serif}
+    .card{max-width:520px;margin:40px auto;background:#fff;padding:30px;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,.08)}
+    .card+.card{margin-top:20px}
+    h3{margin:0 0 18px;font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:#555}
+    .form-group{margin-bottom:15px;position:relative}
+    .form-group label{font-weight:700;font-size:12px;display:block;margin-bottom:6px;text-transform:uppercase;color:#666}
+    .form-group input{width:100%;padding:12px 40px 12px 14px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;box-sizing:border-box}
+    .form-group input:focus{outline:none;border-color:#1A3C34}
+    .eye{position:absolute;right:12px;top:34px;cursor:pointer;font-size:16px}
+    .btn{width:100%;padding:12px;background:#1A3C34;color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:14px}
+    .btn:hover{filter:brightness(.92)}
+    #msg,#pwMsg{margin-top:10px;font-size:13px;font-weight:600;min-height:18px}
+    .back{text-align:center;display:block;color:#1A3C34;margin-top:14px;font-size:13px}
+  </style>
+</head>
+<body>
+
+<!-- Profile Info Card -->
+<div class="card">
+  <h3>Profile Information</h3>
+  <div class="form-group">
+    <label>Full Name</label>
+    <input type="text" id="full_name" value="{{ admin['full_name'] }}">
+  </div>
+  <div class="form-group">
+    <label>Email</label>
+    <input type="email" id="email" value="{{ admin['email'] }}">
+  </div>
+  <button class="btn" onclick="updateProfile()">Save Changes</button>
+  <div id="msg"></div>
+  <a href="/admin_dashboard" class="back">← Back to Dashboard</a>
+</div>
+
+<!-- Change Password Card -->
+<div class="card">
+  <h3>🔑 Change Password</h3>
+  <div class="form-group">
+    <label>Current Password</label>
+    <input type="password" id="oldPw" placeholder="Enter current password">
+    <span class="eye" onclick="toggleEye('oldPw',this)">👁️</span>
+  </div>
+  <div class="form-group">
+    <label>New Password</label>
+    <input type="password" id="newPw" placeholder="Min. 6 characters">
+    <span class="eye" onclick="toggleEye('newPw',this)">👁️</span>
+  </div>
+  <div class="form-group">
+    <label>Confirm New Password</label>
+    <input type="password" id="confPw" placeholder="Repeat new password">
+    <span class="eye" onclick="toggleEye('confPw',this)">👁️</span>
+  </div>
+  <button class="btn" onclick="changePassword()">Change Password</button>
+  <div id="pwMsg"></div>
+</div>
+
+<script>
+function toggleEye(id, el){ const inp=document.getElementById(id); inp.type=inp.type==='password'?'text':'password'; el.textContent=inp.type==='password'?'👁️':'🙈'; }
+
+async function updateProfile(){
+  const full_name = document.getElementById('full_name').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const msg = document.getElementById('msg');
+  if(full_name.length < 2){ msg.style.color='#C00'; msg.textContent='⚠ Full name must be at least 2 characters.'; return; }
+  if(!/^[\w\.-]+@[\w\.-]+\.\w+$/.test(email)){ msg.style.color='#C00'; msg.textContent='⚠ Please enter a valid email address.'; return; }
+  const res = await fetch('/admin/update_profile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({full_name,email,password:document.getElementById('oldPw').value||'placeholder'})});
+  const data = await res.json();
+  msg.style.color = data.success ? 'green' : '#C00';
+  msg.textContent = (data.success ? '✅ ' : '❌ ') + data.message;
+  if(data.success) location.reload();
+}
+
+async function changePassword(){
+  const old_password = document.getElementById('oldPw').value;
+  const new_password = document.getElementById('newPw').value.trim();
+  const confirm_password = document.getElementById('confPw').value.trim();
+  const msg = document.getElementById('pwMsg');
+  if(!old_password){ msg.style.color='#C00'; msg.textContent='⚠ Enter your current password.'; return; }
+  if(new_password.length < 6){ msg.style.color='#C00'; msg.textContent='⚠ New password must be at least 6 characters.'; return; }
+  if(new_password !== confirm_password){ msg.style.color='#C00'; msg.textContent='⚠ New passwords do not match.'; return; }
+  const res = await fetch('/api/admin/change-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({old_password,new_password,confirm_password})});
+  const data = await res.json();
+  msg.style.color = data.success ? 'green' : '#C00';
+  msg.textContent = (data.success ? '✅ ' : '❌ ') + data.message;
+  if(data.success){ document.getElementById('oldPw').value=''; document.getElementById('newPw').value=''; document.getElementById('confPw').value=''; }
+}
+</script>
+</body>
+</html>

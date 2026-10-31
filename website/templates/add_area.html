@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Areas & Wards - EcoCycle Admin</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pending_households.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/add_area.css') }}" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div id="flashBox" style="position:fixed; top:20px; right:20px; z-index:9999;">
+  {% for cat, msg in messages %}
+  <div style="background:{% if cat=='success' %}#2A6B5E{% else %}#8B3A2A{% endif %}; color:#fff; padding:12px 20px; border-radius:8px; margin-bottom:10px;">{{ msg }}</div>
+  {% endfor %}
+</div>
+<script>setTimeout(()=>document.getElementById('flashBox').style.display='none',3000);</script>
+{% endif %}
+{% endwith %}
+
+<div class="app">
+<aside class="sidebar">
+  <div class="sidebar-logo"><div class="logo-icon">EC</div><span>EcoCycle Admin</span></div>
+  <nav class="sidebar-nav">
+    <p class="nav-section">OVERVIEW</p>
+    <a href="{{ url_for('admin_dashboard') }}" class="nav-item">Dashboard</a>
+    <p class="nav-section">CONFIGURATION</p>
+    <a href="{{ url_for('add_area') }}" class="nav-item active">Wards & Areas</a>
+  </nav>
+</aside>
+
+<main class="main">
+<header class="main-header">
+  <div><h1 class="page-title">Manage Areas & Wards</h1><p class="page-subtitle">CONFIGURATION · {{ areas|length }} AREAS</p></div>
+</header>
+
+<section class="form-card">
+  <div class="form-head"><div><h2>Add New Area</h2><p>Create service areas</p></div><span class="ward-pill">NEW AREA</span></div>
+  <form method="POST" class="form-body">
+    <div class="form-grid">
+      <div class="form-group"><label>WARD NUMBER *</label><input type="number" name="ward_no" min="1" placeholder="e.g. 3" required></div>
+      <div class="form-group"><label>AREA NAME *</label><input type="text" name="area_name" minlength="2" placeholder="e.g. Thavakkara" required></div>
+    </div>
+    <div class="form-footer">
+      <button type="reset" class="btn-secondary">CLEAR</button>
+      <button type="submit" class="btn-primary">ADD AREA →</button>
+    </div>
+  </form>
+</section>
+
+<section class="form-card" style="margin-top:30px;">
+  <div class="form-head">
+    <div><h2>Registered Areas</h2><p>Ordered by Ward No</p></div>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <form method="GET">
+        <select name="ward" onchange="this.form.submit()" style="padding:8px 12px; border-radius:20px; border:1px solid #ccc;">
+          <option value="all" {% if selected_ward=='all' %}selected{% endif %}>All Wards</option>
+          {% for w in all_wards %}
+          <option value="{{ w['ward_no'] }}" {% if selected_ward==w['ward_no']|string %}selected{% endif %}>Ward {{ w['ward_no'] }}</option>
+          {% endfor %}
+        </select>
+      </form>
+      <span class="ward-pill">{{ areas|length }} AREAS</span>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>WARD NO</th><th>AREA NAME</th><th>ACTIONS</th></tr></thead>
+      <tbody>
+        {% if areas %}
+          {% for area in areas %}
+          <tr>
+            <td><span class="ward-pill">Ward {{ area['ward_no'] }}</span></td>
+            <td>{{ area['area_name'] }}</td>
+            <td>
+              <a href="{{ url_for('edit_area', area_id=area['area_id']) }}" class="btn-small btn-edit">Edit</a>
+              <a href="{{ url_for('delete_area', area_id=area['area_id']) }}" class="btn-small btn-delete" onclick="return confirm('Delete?')">Delete</a>
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="3" style="text-align:center; padding:20px;">No areas in this ward</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+</main>
+</div>
+</body>
+</html>

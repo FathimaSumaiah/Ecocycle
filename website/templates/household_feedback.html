@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EcoCycle - Complaints & Feedback</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/household_dashboard.css') }}" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .fb-form-group { margin-bottom: 18px; }
+    .fb-label { display: block; font-family: 'JetBrains Mono', monospace; font-size: 11px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; color: #4A5D55; margin-bottom: 6px; }
+    .fb-select, .fb-input, .fb-textarea { width: 100%; padding: 12px 14px; border: 1.5px solid #E6E0D0; border-radius: 12px; font-family: 'Inter', sans-serif; font-size: 14px; background: #fff; color: #1A2A24; outline: none; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+    .fb-select:focus, .fb-input:focus, .fb-textarea:focus { border-color: #2A6B5E; box-shadow: 0 0 0 3px rgba(42, 107, 94, 0.12); }
+    .fb-textarea { height: 110px; resize: vertical; }
+
+    /* Custom Type Selector Pills */
+    .type-pills { display: flex; gap: 10px; margin-bottom: 18px; }
+    .type-pill { flex: 1; padding: 10px 12px; text-align: center; border: 1.5px solid #E6E0D0; border-radius: 12px; font-weight: 600; font-size: 13px; cursor: pointer; background: #fff; transition: all 0.2s; user-select: none; }
+    .type-pill:hover { border-color: #2A6B5E; background: #F0FAF3; }
+    .type-pill.active { background: #1A2A24; color: #fff; border-color: #1A2A24; }
+    .type-pill.active.Complaint { background: #C94A3A; border-color: #C94A3A; }
+    .type-pill.active.Suggestion { background: #2A6B5E; border-color: #2A6B5E; }
+    .type-pill.active.Rating { background: #D98E2A; border-color: #D98E2A; }
+
+    /* Interactive Stars */
+    .star-rating-box { background: #FFF9ED; border: 1px dashed #E6C875; border-radius: 12px; padding: 16px; text-align: center; margin-bottom: 18px; }
+    .stars-display { font-size: 34px; cursor: pointer; display: inline-flex; gap: 6px; user-select: none; }
+    .stars-display span { color: #D0D0D0; transition: color 0.15s ease, transform 0.15s ease; display: inline-block; }
+    .stars-display span:hover, .stars-display span.hovered { transform: scale(1.15); }
+    .stars-display span.active { color: #F1C40F; }
+    .rating-text { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; color: #8C6D1F; margin-top: 6px; }
+
+    /* Submit Button */
+    .btn-submit-fb { width: 100%; padding: 14px; background: linear-gradient(135deg, #1A2A24 0%, #2A6B5E 100%); color: #fff; border: none; border-radius: 12px; font-family: 'Inter', sans-serif; font-weight: 700; font-size: 14px; letter-spacing: 0.5px; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.2s ease; }
+    .btn-submit-fb:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(42, 107, 94, 0.25); }
+    .btn-submit-fb:active { transform: translateY(0); }
+
+    /* Feedback History Cards */
+    .fb-history-list { padding: 16px; display: flex; flex-direction: column; gap: 14px; max-height: 520px; overflow-y: auto; }
+    .fb-card-item { background: #fff; border: 1px solid #E6E0D0; border-radius: 12px; padding: 16px; border-left: 5px solid #1A2A24; transition: box-shadow 0.2s ease; }
+    .fb-card-item:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.06); }
+    .fb-card-item.Complaint { border-left-color: #C94A3A; }
+    .fb-card-item.Suggestion { border-left-color: #2A6B5E; }
+    .fb-card-item.Rating { border-left-color: #F1C40F; }
+
+    .fb-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+    .fb-card-subject { font-weight: 700; font-size: 15px; color: #1A2A24; }
+    .fb-card-date { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8A9A93; white-space: nowrap; }
+
+    .fb-meta-tags { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+    .fb-tag { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; text-transform: uppercase; }
+    .fb-tag.Complaint { background: #FDE8E8; color: #C94A3A; }
+    .fb-tag.Suggestion { background: #E8F4F0; color: #2A6B5E; }
+    .fb-tag.Rating { background: #FEF7E0; color: #B38600; }
+
+    .status-badge-fb { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 20px; text-transform: uppercase; }
+    .status-badge-fb.Pending { background: #FFF3CD; color: #856404; border: 1px solid #FFE69C; }
+    .status-badge-fb.Reviewed { background: #CCE5FF; color: #004085; border: 1px solid #B8DAFF; }
+    .status-badge-fb.Resolved { background: #D4EDDA; color: #155724; border: 1px solid #C3E6CB; }
+
+    .fb-message-text { font-size: 13px; color: #4A5A53; line-height: 1.5; margin-top: 6px; }
+    .fb-empty-state { text-align: center; padding: 40px 20px; color: #7A8A83; }
+    .fb-empty-state .empty-icon { font-size: 40px; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+<div class="household-app">
+  <!-- EcoCycle Household Header -->
+  <header class="h-header">
+    <div class="h-logo">
+      <img src="{{ url_for('static', filename='images/eco_cycle_logo.webp') }}" alt="EcoCycle Logo" style="width:36px; height:36px; border-radius:10px; object-fit:contain; background:#fff; padding:3px;">
+      EcoCycle <small>Household</small>
+    </div>
+    <div class="h-nav">
+      <a href="/household_dashboard">Home</a>
+      <a href="/rewards">Rewards</a>
+      <a href="/household/feedback" class="active">Feedbacks</a>
+    </div>
+    <div class="h-profile">
+      <div class="points-pill">🌿 {{ household['reward_wallet'] if household else 0 }} pts</div>
+      <a href="{{ url_for('household_profile') }}" class="nav-item" style="color: inherit; text-decoration: none;">
+        <div class="avatar-circle">{{ (household['full_name'][:2] if household and household['full_name'] else 'HH')|upper }}</div>
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="h-main">
+    <section class="welcome">
+      <div>
+        <h1>💬 Complaints & Feedback</h1>
+        <p class="mono">Submit your complaints, suggestions, or service ratings directly to EcoCycle Admin</p>
+      </div>
+      <div class="welcome-card">
+        <div class="level-badge">Ward {{ household['ward_no'] if household else '-' }}</div>
+        <div class="rank">{{ household['area'] if household else '-' }}</div>
+      </div>
+    </section>
+
+    <div class="two-col">
+      <!-- Left Column: Submit Form -->
+      <div class="left-col">
+        <section class="card">
+          <div class="card-head">
+            <h2>📝 Send Feedback or Complaint</h2>
+            <span class="mono-small">Direct to EcoCycle Team</span>
+          </div>
+          <div style="padding: 20px;">
+            <input type="hidden" id="selectedType" value="Complaint">
+
+            <div class="fb-form-group">
+              <label class="fb-label">Feedback Type</label>
+              <div class="type-pills">
+                <div class="type-pill active Complaint" onclick="selectType('Complaint')">🚨 Complaint</div>
+                <div class="type-pill Suggestion" onclick="selectType('Suggestion')">💡 Suggestion</div>
+                <div class="type-pill Rating" onclick="selectType('Rating')">⭐ Rating</div>
+              </div>
+            </div>
+
+            <!-- Rating Stars Section (Shows only for Rating) -->
+            <div id="ratingBox" class="star-rating-box" style="display: none;">
+              <label class="fb-label" style="text-align: center;">Your Rating</label>
+              <div class="stars-display" id="starContainer">
+                <span onclick="setRating(1)" onmouseover="hoverRating(1)" onmouseout="resetHover()">★</span>
+                <span onclick="setRating(2)" onmouseover="hoverRating(2)" onmouseout="resetHover()">★</span>
+                <span onclick="setRating(3)" onmouseover="hoverRating(3)" onmouseout="resetHover()">★</span>
+                <span onclick="setRating(4)" onmouseover="hoverRating(4)" onmouseout="resetHover()">★</span>
+                <span onclick="setRating(5)" onmouseover="hoverRating(5)" onmouseout="resetHover()">★</span>
+              </div>
+              <div class="rating-text" id="ratingLabel">5 / 5 Stars - Excellent Service</div>
+            </div>
+
+            <!-- Subject Section -->
+            <div class="fb-form-group" id="subjectGroup">
+              <label class="fb-label">Subject</label>
+              <input type="text" id="subjectInput" class="fb-input" placeholder="e.g. Worker didn't arrive, Bin placement issue, Service delay...">
+            </div>
+
+            <!-- Message Section -->
+            <div class="fb-form-group" id="messageGroup">
+              <label class="fb-label">Message Details</label>
+              <textarea id="messageInput" class="fb-textarea" placeholder="Provide clear details so our admin team can assist you effectively..."></textarea>
+            </div>
+
+            <button type="button" class="btn-submit-fb" onclick="submitFeedback()">SEND TO ADMIN</button>
+          </div>
+        </section>
+      </div>
+
+      <!-- Right Column: My Feedback History -->
+      <div class="right-col">
+        <section class="card">
+          <div class="card-head">
+            <h2>📋 My Previous Submissions</h2>
+            <span class="mono-small" style="background:#1A2A24; color:#fff; padding:3px 10px; border-radius:12px;">{{ my_feedbacks|length }} Total</span>
+          </div>
+
+          <div class="fb-history-list">
+            {% for f in my_feedbacks %}
+            <div class="fb-card-item {{ f.type }}">
+              <div class="fb-card-top">
+                <div class="fb-card-subject">{{ f.subject }}</div>
+                {% if f.type != 'Rating' %}
+                <span class="status-badge-fb {{ f.status }}">{{ f.status }}</span>
+                {% endif %}
+              </div>
+
+              <div class="fb-meta-tags">
+                <span class="fb-tag {{ f.type }}">{{ f.type }}</span>
+                {% if f.rating %}
+                <span style="font-family:'JetBrains Mono'; font-size:11px; font-weight:700; color:#D98E2A;">⭐ {{ f.rating }}/5 Stars</span>
+                {% endif %}
+                <span class="fb-card-date">{{ f.created_at.strftime('%d %b %Y, %I:%M %p') if f.created_at else '' }}</span>
+              </div>
+
+              {% if f.message %}
+              <div class="fb-message-text">{{ f.message }}</div>
+              {% endif %}
+            </div>
+            {% else %}
+            <div class="fb-empty-state">
+              <div class="empty-icon">💬</div>
+              <h4 style="font-family:'Fraunces'; font-size:16px; margin-bottom:4px;">No Feedback Submitted Yet</h4>
+              <p class="mono-small">Your submitted complaints, suggestions, or ratings will appear here.</p>
+            </div>
+            {% endfor %}
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+let currentRating = 5;
+const ratingTexts = {
+  1: "1 / 5 Stars - Unsatisfactory",
+  2: "2 / 5 Stars - Needs Improvement",
+  3: "3 / 5 Stars - Average Service",
+  4: "4 / 5 Stars - Very Good",
+  5: "5 / 5 Stars - Excellent Service"
+};
+
+function selectType(type) {
+  document.getElementById('selectedType').value = type;
+  
+  // Update Pills UI
+  document.querySelectorAll('.type-pill').forEach(pill => {
+    pill.classList.remove('active');
+    if (pill.classList.contains(type)) pill.classList.add('active');
+  });
+
+  const isRating = (type === 'Rating');
+  document.getElementById('ratingBox').style.display = isRating ? 'block' : 'none';
+  document.getElementById('subjectGroup').style.display = isRating ? 'none' : 'block';
+  document.getElementById('messageGroup').style.display = isRating ? 'none' : 'block';
+}
+
+function setRating(n) {
+  currentRating = n;
+  updateStarsUI(n);
+  document.getElementById('ratingLabel').textContent = ratingTexts[n] || `${n} Stars`;
+}
+
+function hoverRating(n) {
+  updateStarsUI(n, true);
+}
+
+function resetHover() {
+  updateStarsUI(currentRating);
+}
+
+function updateStarsUI(n, isHover = false) {
+  const spans = document.querySelectorAll('#starContainer span');
+  spans.forEach((s, idx) => {
+    if (idx < n) {
+      s.classList.add(isHover ? 'hovered' : 'active');
+    } else {
+      s.classList.remove('active', 'hovered');
+    }
+  });
+}
+
+// Initialize stars UI
+setRating(5);
+
+async function submitFeedback() {
+  const type = document.getElementById('selectedType').value;
+  const subject = document.getElementById('subjectInput').value.trim();
+  const message = document.getElementById('messageInput').value.trim();
+
+  if (type !== 'Rating') {
+    if (!subject) {
+      alert("Please enter a subject for your " + type);
+      document.getElementById('subjectInput').focus();
+      return;
+    }
+    if (!message) {
+      alert("Please enter message details for your " + type);
+      document.getElementById('messageInput').focus();
+      return;
+    }
+  }
+
+  const payload = {
+    type: type,
+    rating: currentRating,
+    subject: subject || null,
+    message: message || null
+  };
+
+  try {
+    const res = await fetch('/household/send_feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    alert(data.message);
+    if (data.success) {
+      location.reload();
+    }
+  } catch (err) {
+    alert("Error sending feedback: " + err.message);
+  }
+}
+</script>
+</body>
+</html>

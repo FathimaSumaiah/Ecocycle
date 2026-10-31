@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>EcoCycle — Collection Worker Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+  :root{
+    --bg:#F4F6F8; --panel:#FFFFFF; --panel-soft:#F8FAFC; --line:#E2E8F0;
+    --text:#0F172A; --text-dim:#475569; --text-faint:#94A3B8;
+    --ink:#0F172A; --primary:#1E40AF; --primary-soft:#EFF6FF; --primary-dim:#BFDBFE;
+    --amber:#D97706; --amber-soft:#FEF3C7; --enroute:#2563EB; --enroute-soft:#DBEAFE;
+    --green:#166534; --green-soft:#DCFCE7; --red:#DC2626; --red-soft:#FEE2E2; --gold:#D97706;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background: radial-gradient(circle at 8% 0%, #E0F2FE 0%, transparent 45%), radial-gradient(circle at 100% 10%, #FEF3C7 0%, transparent 40%), linear-gradient(180deg, #F1F5F9 0%, #E2E8F0 100%); background-attachment:fixed; color:var(--text); font-family:'Manrope',sans-serif; min-height:100vh;}
+  .wrap{max-width:1340px; margin:0 auto; padding:22px 26px 60px;}
+  .nav-top{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:18px; padding:12px 18px; border-radius:16px; background:rgba(255,255,255,0.95); backdrop-filter:blur(10px); border:1px solid var(--line); box-shadow:0 4px 20px rgba(15,23,42,0.05);}
+  .nav-links{display:flex; gap:8px; flex-wrap:wrap;}
+  .nav-links a{color:var(--text-dim); font-size:13px; font-weight:700; text-decoration:none; padding:9px 18px; border-radius:999px; background:var(--panel-soft); border:1px solid var(--line); transition:all 0.2s ease;}
+  .nav-links a:hover{background:var(--primary-soft); color:var(--primary); border-color:var(--primary-dim);}
+  .nav-links a.active{background:linear-gradient(135deg,#1E40AF,#2563EB); color:#fff; border-color:transparent; box-shadow:0 4px 12px rgba(37,99,235,0.25);}
+  .nav-right{display:flex; align-items:center; gap:10px;}
+  .profile-chip{display:flex; align-items:center; gap:9px; text-decoration:none; padding:6px 14px 6px 6px; border-radius:999px; background:var(--panel); border:1px solid var(--line); color:var(--ink); transition:all 0.2s;}
+  .profile-chip:hover{border-color:var(--primary); transform:translateY(-1px);}
+  .profile-avatar{width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#1E40AF,#3B82F6); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px;}
+  .logout-btn{color:#fff; font-size:12.5px; font-weight:700; text-decoration:none; padding:9px 18px; border-radius:999px; background:linear-gradient(135deg,#DC2626,#EF4444); box-shadow:0 2px 8px rgba(220,38,38,0.25); transition:transform 0.15s;}
+  .logout-btn:hover{transform:translateY(-1px);}
+  .flash-msg{padding:14px 18px; border-radius:12px; margin-bottom:18px; border:1px solid var(--primary-dim); background:var(--primary-soft); color:#1E3A8A; font-weight:700; font-size:13.5px; box-shadow:0 2px 10px rgba(37,99,235,0.08);}
+
+  .main-w-header{display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px; padding:20px 24px; margin-bottom:22px; border-radius:18px; background:rgba(255,255,255,0.95); backdrop-filter:blur(10px); border:1px solid var(--line); box-shadow:0 4px 20px rgba(15,23,42,0.05);}
+  .festive-pill-on{background:linear-gradient(135deg,#FF8C00,#FF3B30)!important; color:#fff!important; border:none!important; animation:festivePulse 1.5s ease-in-out infinite;}
+  @keyframes festivePulse{ 0%,100%{transform:scale(1)} 50%{transform:scale(1.03)} }
+
+  .grid{display:grid; grid-template-columns:1.35fr 0.85fr; gap:22px; align-items:start;}
+  @media(max-width:980px){.grid{grid-template-columns:1fr;}}
+  
+  .card{background:rgba(255,255,255,0.95); backdrop-filter:blur(10px); border:1px solid var(--line); border-radius:18px; padding:24px; box-shadow:0 4px 20px rgba(15,23,42,0.04); transition:all 0.2s ease;}
+  .card-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; padding-bottom:12px; border-bottom:1px solid var(--line);}
+  .card-head h2{font-size:16px; font-weight:800; color:var(--text); margin:0; display:flex; align-items:center; gap:8px;}
+  .card-head .hint{font-size:12px; color:var(--text-faint); font-weight:700; font-family:'JetBrains Mono',monospace;}
+  
+  .route-timeline{position:relative;}
+  .stop{display:flex; gap:14px; padding:18px; border-radius:14px; background:var(--panel-soft); border:1px solid var(--line); margin-bottom:14px; transition:all 0.2s;}
+  .stop:hover{border-color:var(--primary-dim); box-shadow:0 4px 14px rgba(37,99,235,0.06);}
+  .stop:last-child{margin-bottom:0;}
+  .stop-num{width:42px; height:42px; border-radius:12px; background:linear-gradient(135deg,#1E40AF,#3B82F6); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:15px; color:#fff; flex-shrink:0; box-shadow:0 2px 8px rgba(37,99,235,0.25);}
+  .stop-body{flex:1;}
+  .stop-top{display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .stop-name{font-weight:800; font-size:15px; color:var(--text);}
+  .stop-addr{font-size:13px; color:var(--text-dim); margin-top:4px;}
+  .stop-meta{display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;}
+  .meta-chip{font-size:11.5px; font-weight:700; color:var(--primary); background:var(--primary-soft); border:1px solid var(--primary-dim); padding:4px 12px; border-radius:999px;}
+  .stop-actions{display:flex; gap:10px; margin-top:14px; align-items:center; flex-wrap:wrap;}
+  .btn-small{font-size:12.5px; font-weight:700; padding:9px 16px; border-radius:10px; border:1px solid var(--line); background:#fff; color:var(--text); cursor:pointer; text-decoration:none; transition:all 0.15s ease; display:inline-flex; align-items:center; gap:6px;}
+  .btn-small:hover{transform:translateY(-1px);}
+  .btn-small.primary{background:linear-gradient(135deg,#166534,#22C55E); border-color:transparent; color:#fff; box-shadow:0 2px 8px rgba(34,197,94,0.25);}
+  .btn-small.reward{background:linear-gradient(135deg,#D97706,#F59E0B); border-color:transparent; color:#fff; font-weight:800; box-shadow:0 2px 8px rgba(217,119,6,0.25);}
+  .btn-small.danger{background:var(--red-soft); border-color:#FCA5A5; color:var(--red);}
+  .btn-small.danger:hover{background:var(--red); color:#fff;}
+  .status-badge{font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; padding:5px 12px; border-radius:999px;}
+  .status-badge.enroute{background:var(--enroute-soft); color:var(--enroute); border:1px solid #BFDBFE;}
+  .empty-note{color:var(--text-faint); font-size:13.5px; padding:32px 16px; text-align:center; font-weight:600;}
+  
+  .queue-item{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:16px; border-radius:14px; background:var(--panel-soft); border:1px solid var(--line); margin-bottom:12px; transition:all 0.2s;}
+  .queue-item:hover{border-color:var(--amber); background:#FFFDF5;}
+  .queue-item:last-child{margin-bottom:0;}
+  .queue-left{display:flex; gap:12px; align-items:flex-start;}
+  .queue-order{width:28px; height:28px; border-radius:8px; background:var(--amber-soft); color:var(--amber); font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1px solid #FDE68A;}
+  .queue-name{font-size:14.5px; font-weight:800; color:var(--text);}
+  .queue-wait{font-size:12px; color:var(--text-dim); margin-top:3px;}
+  .queue-wait b{color:var(--text);}
+
+  .stat-row{display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px dashed var(--line); font-size:13.5px;}
+  .stat-row:last-child{border-bottom:none;}
+  .stat-row .k{color:var(--text-dim); font-weight:600;}
+  .stat-row .v{font-weight:800; font-family:'JetBrains Mono',monospace;}
+  .v.up{color:var(--green);}.v.warn{color:var(--amber);}
+  .side-col{display:flex; flex-direction:column; gap:22px;}
+  #map{border-radius:14px; overflow:hidden; border:1px solid var(--line); box-shadow:0 2px 8px rgba(0,0,0,0.04);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, message in messages %}
+    {% if category == 'worker' %}
+      <div class="flash-msg">📢 {{ message }}</div>
+    {% endif %}
+  {% endfor %}
+{% endwith %}
+
+  <!-- Top Bar Navigation -->
+  <div class="nav-top">
+    <div class="nav-links">
+      <a href="/worker_dashboard" class="active">🚚 Dashboard</a>
+      <a href="/worker_viewhouseholds">👥 Households ({{ households|length }})</a>
+      <a href="/worker_viewhistory">📦 Collection History</a>
+      <a href="/worker/leave_dates" style="background:#0F172A; color:#fff; border-color:#0F172A;">📅 Leave Log History</a>
+    </div>
+    <div class="nav-right">
+      <a class="logout-btn" href="/logout">Logout</a>
+    </div>
+  </div>
+
+  <!-- Header Banner -->
+  <header class="main-w-header">
+    <div style="display:flex; align-items:center; gap:16px;">
+      <div style="width:48px; height:48px; border-radius:14px; background:{% if festive_mode == 1 %}linear-gradient(135deg,#FF8C00,#FF3B30){% else %}linear-gradient(135deg,#1E40AF,#2563EB){% endif %}; color:#fff; display:grid; place-items:center; font-weight:800; font-size:16px; box-shadow:0 4px 12px rgba(30,64,175,0.3);">EC</div>
+      <div>
+        <h1 style="margin:0; font-size:20px; font-weight:800; color:var(--text);">Worker Dashboard {% if festive_mode == 1 %}🎉{% endif %}</h1>
+        <div style="font-size:12.5px; color:var(--text-dim); margin-top:3px; font-weight:600;">Ward {{ worker['ward_no'] }} — {{ worker['area'] }} · {{ today_date }}</div>
+        <div style="margin-top:8px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          {% if festive_mode == 1 %}
+          <span class="festive-pill-on" style="padding:6px 14px; border-radius:20px; font-size:12px; font-weight:800;">🎉 FESTIVE MODE: 35 Houses Limit | Till 7 PM</span>
+          {% else %}
+          <span style="background:#DCFCE7; border:1px solid #86EFAC; color:#166534; padding:5px 12px; border-radius:20px; font-size:11.5px; font-weight:800;">✅ NORMAL MODE: 5 Houses Limit | Till 5 PM</span>
+          {% endif %}
+          <span style="background:{% if festive_mode == 1 %}#FEF3C7{% else %}#DCFCE7{% endif %}; border:1px solid {% if festive_mode == 1 %}#FDE68A{% else %}#86EFAC{% endif %}; color:{% if festive_mode == 1 %}#92400E{% else %}#166534{% endif %}; padding:6px 14px; border-radius:20px; font-size:12px; font-weight:800;">⚡ Daily Limit Left: <b style="font-size:14px; font-family:'JetBrains Mono';">{{ remaining_limit }} </span>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:right; display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
+      <a href="/worker_profile" class="profile-chip" title="View Profile">
+        <span class="profile-avatar" style="background:{% if festive_mode == 1 %}linear-gradient(135deg,#FF8C00,#FF3B30){% else %}linear-gradient(135deg,#1E40AF,#3B82F6){% endif %};">{{ worker['full_name'][0]|upper }}</span>
+        <span style="text-align:left;">
+          <div style="font-size:13.5px; font-weight:800; color:var(--text);">{{ worker['full_name'] }}</div>
+          <div style="font-size:11px; color:var(--text-dim); font-weight:600;">👤 View Profile</div>
+        </span>
+      </a>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <span style="background:{% if festive_mode == 1 %}#FEF3C7{% else %}#DCFCE7{% endif %}; border:1px solid {% if festive_mode == 1 %}#FDE68A{% else %}#86EFAC{% endif %}; color:{% if festive_mode == 1 %}#92400E{% else %}#166534{% endif %}; display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:999px; font-size:12px; font-weight:800;">
+          <span style="width:7px; height:7px; background:{% if festive_mode == 1 %}#FF8C00{% else %}#22C55E{% endif %}; border-radius:50%;"></span> {{ assigned_pickups|length }} Assigned Today
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Left and Right Layout Grid -->
+  <div class="grid">
+    <!-- Left Column: Assigned Pickups & Route Map -->
+    <div style="display:flex; flex-direction:column; gap:22px;">
+      <div class="card">
+        <div class="card-head">
+          <h2><span>🚚</span> Today's Route — Assigned Pickups</h2>
+          <span class="hint">{{ assigned_pickups|length }} stops today</span>
+        </div>
+        <div class="route-timeline">
+          {% for p in assigned_pickups %}
+          <div class="stop">
+            <div class="stop-num">{{ loop.index }}</div>
+            <div class="stop-body">
+              <div class="stop-top">
+                <div>
+                  <div class="stop-name">{{ p['full_name'] }}</div>
+                  <div class="stop-addr">🏠 House {{ p['house_no'] }}, {{ p['area'] }} · 📞 <a href="tel:{{ p['phone'] }}" style="color:var(--primary); font-weight:700; text-decoration:none;">{{ p['phone'] }}</a></div>
+                  <div class="stop-addr" style="color:var(--primary); font-weight:700;">🕒 Requested: {{ p['created_at'].strftime('%d %b %I:%M %p') if p['created_at'] else '' }}</div>
+                </div>
+                <span class="status-badge enroute">{{ p['status'] }}</span>
+              </div>
+              <div class="stop-meta">
+                <span class="meta-chip">📍 Ward {{ worker['ward_no'] }}</span>
+                <span class="meta-chip">Pickup #{{ p['id'] }}</span>
+              </div>
+              <div class="stop-actions">
+                <a class="btn-small" href="https://www.google.com/maps/search/?api=1&query={{ p['latitude'] }},{{ p['longitude'] }}" target="_blank">🗺 Map ↗</a>
+                <a class="btn-small reward" href="/worker/rewards/{{ p['id'] }}" style="margin-left:auto;">🎁 Reward & Collect Waste</a>
+                <form method="POST" action="/worker/update_pickup/{{ p['id'] }}/Not Home" style="margin:0;"><button class="btn-small danger" type="submit">Not Home</button></form>
+              </div>
+            </div>
+          </div>
+          {% else %}
+          <div class="empty-note">
+            <div style="font-size:36px; margin-bottom:8px;">📦</div>
+            <h4 style="margin:0; font-size:15px; color:var(--text);">No assigned pickups for today</h4>
+            <p style="margin:4px 0 0; font-size:12.5px;">Accept new requests from the pending queue on the right →</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2><span>🗺</span> Route Map — Ward {{ worker['ward_no'] }}</h2>
+          <span class="hint">{{ worker['area'] }}</span>
+        </div>
+        <div id="map" style="height:340px;"></div>
+      </div>
+    </div>
+
+    <!-- Right Column: Pending Queue & Statistics -->
+    <div class="side-col">
+      <div class="card" style="border-top:4px solid var(--amber);">
+        <div class="card-head">
+          <h2><span>⏳</span> Pending Requests</h2>
+          <span class="hint" style="color:var(--amber);">{{ incoming_requests|length }} pending</span>
+        </div>
+        <div>
+          {% for p in incoming_requests %}
+          <div class="queue-item">
+            <div class="queue-left">
+              <span class="queue-order">{{ loop.index }}</span>
+              <div>
+                <div class="queue-name">{{ p['full_name'] }}</div>
+                <div class="queue-wait"><b>House No:</b> {{ p['house_no'] }} · {{ p['area'] }} · <b>Ward {{ p['ward_no'] }}</b></div>
+                <div class="queue-wait"><b>Phone:</b> {{ p['phone'] }}</div>
+                <div class="queue-wait" style="color:var(--primary); font-weight:700;">🕒 Request: {{ p['created_at'].strftime('%d %b %I:%M %p') if p['created_at'] else 'Just now' }}</div>
+                {% if p.get('is_reassigned') or (p.get('reassign_count') and p['reassign_count'] > 0) %}
+                <div style="margin-top:2px;"><span style="background:#FEF3C7; color:#92400E; border:1px solid #FDE68A; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:800;">🔄 Reassigned to you</span></div>
+                {% endif %}
+                <div class="queue-wait countdown" data-time="{% if (p.get('is_reassigned') or (p.get('reassign_count') and p['reassign_count'] > 0)) and p.get('updated_at') %}{{ p['updated_at'].isoformat() }}{% elif p.get('created_at') %}{{ p['created_at'].isoformat() }}{% endif %}" data-reassigned="{% if p.get('is_reassigned') or (p.get('reassign_count') and p['reassign_count'] > 0) %}1{% else %}0{% endif %}" style="font-weight:800;">⏳ <span class="timer-text">Loading...</span></div>
+              </div>
+            </div>
+            <div style="display:flex; gap:6px; flex-shrink:0;">
+              <form method="POST" action="/worker/accept_pickup/{{ p['id'] }}" style="margin:0;"><button class="btn-small primary accept-btn" type="submit" title="Accept Request">✓ Accept</button></form>
+            </div>
+          </div>
+          {% else %}
+          <div class="empty-note" style="padding:20px;">
+            <div style="font-size:32px; margin-bottom:6px;">✨</div>
+            <p style="margin:0; font-size:13px; font-weight:700;">No pending requests</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2><span>📊</span> Today at a Glance</h2>
+          <span class="hint">Ward {{ worker['ward_no'] }}</span>
+        </div>
+        <div class="stat-row"><span class="k">Total Area Households</span><span class="v">{{ households|length }}</span></div>
+        <div class="stat-row"><span class="k">Assigned Pickups</span><span class="v up">{{ assigned_pickups|length }}</span></div>
+        <div class="stat-row"><span class="k">Pending Requests</span><span class="v warn">{{ incoming_requests|length }}</span></div>
+        <div class="stat-row"><span class="k">Completed Today</span><span class="v up">{{ completed_today }} houses</span></div>
+        <div class="stat-row"><span class="k">Remaining Daily Limit</span><span class="v {% if remaining_limit <= 5 %}warn{% else %}up{% endif %}">{{ remaining_limit }} / {{ max_limit }} left</span></div>
+        <div style="margin-top:12px; padding-top:8px; border-top:1px dashed var(--line);">
+          <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-dim); font-weight:700; margin-bottom:4px;">
+            <span>Daily Capacity Limit</span>
+            <span><b>{{ remaining_limit }}</b> / {{ max_limit }} remaining</span>
+          </div>
+          <div style="background:var(--line); height:8px; border-radius:4px; overflow:hidden;">
+            {% set used_pct = ((completed_today / max_limit) * 100)|int if max_limit > 0 else 0 %}
+            <div style="background:{% if festive_mode==1 %}#FF8C00{% else %}#22C55E{% endif %}; height:100%; width:{{ used_pct }}%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+let map = L.map('map').setView([11.2588, 75.7804], 13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(map);
+let latlngs = [];
+{% for p in assigned_pickups %}
+  {% if p['latitude'] and p['longitude'] %}
+    {% if p['latitude']!= 0 and p['longitude']!= 0 %}
+      (function(){
+        let lat = parseFloat("{{ p['latitude'] }}");
+        let lng = parseFloat("{{ p['longitude'] }}");
+        if(isNaN(lat) || isNaN(lng)) return;
+        let icon = L.divIcon({ html:'<div style="background:#1E40AF; width:28px; height:28px; border-radius:50%; border:2px solid white; display:flex; align-items:center; justify-content:center; color:white; font-weight:800; font-size:12px; box-shadow:0 2px 6px rgba(0,0,0,0.3);">{{ loop.index }}</div>', className:'', iconSize:[28,28] });
+        L.marker([lat,lng], {icon: icon}).addTo(map).bindPopup("<b>{{ p['full_name'] }}</b><br>House {{ p['house_no'] }}");
+        latlngs.push([lat,lng]);
+      })();
+    {% endif %}
+  {% endif %}
+{% endfor %}
+let workerMarker = null;
+function showWorker(lat,lng, isReal=false){
+  let color = isReal? "#DC2626" : "#64748B";
+  let label = isReal? "📍 YOUR CURRENT LOCATION" : "📍 Ward Center";
+  let wIcon = L.divIcon({ html:`<div style="background:${color}; width:20px; height:20px; border-radius:50%; border:3px solid white; box-shadow:0 0 10px rgba(0,0,0,0.4);"></div>`, iconSize:[20,20] });
+  if(!workerMarker){
+    workerMarker = L.marker([lat,lng], {icon:wIcon}).addTo(map).bindPopup(label).openPopup();
+  } else {
+    workerMarker.setLatLng([lat,lng]);
+  }
+  if(latlngs.length>0) map.fitBounds(latlngs,{padding:[60,60]});
+}
+if(navigator.geolocation){
+  navigator.geolocation.watchPosition(pos=>{
+    showWorker(pos.coords.latitude, pos.coords.longitude, true);
+    fetch('/worker/update_location', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({lat:pos.coords.latitude,lng:pos.coords.longitude})});
+  },
+  err=>{
+    if(latlngs.length>0) showWorker(latlngs[0][0], latlngs[0][1], false);
+    else showWorker(11.2588, 75.7804, false);
+  },
+  {enableHighAccuracy:true});
+} else {
+  if(latlngs.length>0) showWorker(latlngs[0][0], latlngs[0][1], false);
+}
+setTimeout(()=>{ if(latlngs.length>0) map.fitBounds(latlngs,{padding:[60,60]}); map.invalidateSize(); }, 1000);
+</script>
+<script>
+function updateCountdowns(){
+  document.querySelectorAll('.countdown').forEach(el=>{
+    const iso = el.dataset.time;
+    const isReassigned = el.dataset.reassigned === "1";
+    if(!iso){ el.querySelector('.timer-text').textContent = "Just now - 60m left"; return; }
+    const created = new Date(iso);
+    const deadline = new Date(created.getTime() + 60*60*1000);
+    const now = new Date();
+    const diff = deadline - now;
+    const textEl = el.querySelector('.timer-text');
+    if(diff <= 0){
+      if(isReassigned){
+        textEl.textContent = "⚠️ Reassigned — Action Required";
+        el.style.color = "#D97706";
+      } else {
+        textEl.textContent = "⏰ Pending — Awaiting Pickup";
+        el.style.color = "#DC2626";
+      }
+    } else {
+      const mins = Math.floor(diff/60000);
+      const secs = Math.floor((diff%60000)/1000);
+      textEl.textContent = `⏰ Accept in: ${mins}m ${secs}s left`;
+      el.style.color = mins < 10? "#DC2626" : "#166534";
+    }
+  });
+}
+setInterval(updateCountdowns, 1000);
+updateCountdowns();
+</script>
+</body>
+</html>

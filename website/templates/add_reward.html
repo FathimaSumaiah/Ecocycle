@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>EcoCycle — Add Reward</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600&family=Inter:wght@400;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#EAF6EC;--panel:#fff;--line:#C5E0CA;--forest:#14532D;--dark:#0B2E1B;--red:#D2694E;--red-dim:#3a201c;}
+*{box-sizing:border-box} body{margin:0; background:var(--bg); font-family:'Inter',sans-serif; color:var(--dark);}
+.wrap{max-width:700px; margin:30px auto; padding:16px;}
+.card{background:#fff; border:1px solid var(--line); border-radius:16px; padding:24px;}
+h1{margin:0; font-family:'Oswald'; font-size:20px; color:var(--forest); text-transform:uppercase;}
+.sub{font-size:12px; color:#666; margin:6px 0 16px; font-family:'JetBrains Mono'; line-height:1.5;}
+.head{display:flex; gap:8px; font-size:10px; text-transform:uppercase; color:#888; margin-bottom:6px; font-weight:700; letter-spacing:0.8px;}
+.head span:nth-child(1){flex:1.5}.head span:nth-child(2){flex:0.7}.head span:nth-child(3){width:80px; text-align:center}.head span:nth-child(4){width:30px}
+.waste-row{display:flex; gap:8px; margin-bottom:10px; align-items:center;}
+.waste-row select{flex:1.5; padding:11px; border:1px solid var(--line); border-radius:8px; font-size:13px;}
+.waste-row input{flex:0.7; padding:11px; border:1px solid var(--line); border-radius:8px; font-size:13px;}
+.pts{width:80px; text-align:center; font-weight:700; font-size:12px; color:var(--forest); font-family:'JetBrains Mono';}
+.pts.disposal{color:var(--red); font-size:11px;}
+.del{width:32px; height:32px; border-radius:50%; border:1px solid #f0caca; background:#fff; color:#C94A3A; cursor:pointer; flex-shrink:0;}
+.add-btn{width:100%; border:1px dashed var(--forest); background:#F3FAF5; color:var(--forest); padding:11px; border-radius:10px; font-weight:700; cursor:pointer; margin-top:8px;}
+.total-box{margin-top:16px; background:#0B2E1B; color:#fff; border-radius:12px; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;}
+.total-box b{font-size:22px; color:#2ECC71; font-family:'Oswald';}
+.btn{width:100%; margin-top:14px; background:var(--forest); color:#fff; border:none; padding:13px; border-radius:10px; font-weight:700; cursor:pointer; font-size:14px;}
+.back{display:inline-block; margin-bottom:12px; font-size:12px; text-decoration:none; color:var(--forest); border:1px solid var(--line); padding:6px 12px; border-radius:20px; background:#fff;}
+</style>
+</head>
+<body>
+<div class="wrap">
+<a href="/worker_dashboard" class="back">← Back to Dashboard</a>
+<div class="card">
+<h1>Add Rewards</h1>
+<div class="sub">
+  Pickup #{{ pickup.id }} · {{ pickup.full_name }} · House {{ pickup.house_no }} · Area {{ pickup.area }}<br>
+  Wallet: <b>{{ pickup.reward_wallet }} pts</b>
+</div>
+
+<form method="POST" id="rewardForm" onsubmit="return confirmReward(event)">    <div class="head"><span>Waste Category (Admin added)</span><span>Weight kg</span><span>Points</span><span></span></div>
+<div id="rows">
+  <div class="waste-row">
+    <select name="category_id[]" required onchange="calcRow(this)">
+      <option value="">Select waste</option>
+      {% for c in categories %}
+      <option value="{{ c.category_id }}" data-pts="{{ c.points_per_kg }}" data-disposal="{{ c.is_disposal }}" data-name="{{ c.category_name }}">
+        {{ c.category_name }} — {{ c.points_per_kg }} pts/kg {% if c.is_disposal==1 %} (DISPOSAL) {% endif %}
+      </option>
+      {% endfor %}
+    </select>
+    <input type="number" step="0.1" min="0.1" name="weight[]" placeholder="kg" required oninput="calcRow(this)">
+    <div class="pts">0 pts</div>
+    <button type="button" class="del" onclick="removeRow(this)">✕</button>
+  </div>
+</div>
+
+<button type="button" class="add-btn" onclick="addRow()">+ Add another waste</button>
+
+<div class="total-box">
+  <div>
+    <div style="font-size:11px; opacity:0.7; font-family:'JetBrains Mono';">TOTAL</div>
+    <div id="totalText" style="font-size:12px;">0 kg → 0 pts</div>
+    <div id="disposalText" style="font-size:10px; color:#FF9B8A; margin-top:4px; display:none; font-family:'JetBrains Mono';"></div>
+  </div>
+  <b id="totalPts">0 pts</b>
+</div>
+
+<button type="submit" class="btn">🎁 Save All Rewards</button>
+</form>
+</div>
+</div>
+
+<!-- hidden template for cloning -->
+<template id="rowTemplate">
+  <div class="waste-row">
+    <select name="category_id[]" required onchange="calcRow(this)">
+      <option value="">Select waste</option>
+      {% for c in categories %}
+      <option value="{{ c.category_id }}" data-pts="{{ c.points_per_kg }}" data-disposal="{{ c.is_disposal }}" data-name="{{ c.category_name }}">
+        {{ c.category_name }} — {{ c.points_per_kg }} pts/kg {% if c.is_disposal==1 %} (DISPOSAL) {% endif %}
+      </option>
+      {% endfor %}
+    </select>
+    <input type="number" step="0.1" min="0.1" name="weight[]" placeholder="kg" required oninput="calcRow(this)">
+    <div class="pts">0 pts</div>
+    <button type="button" class="del" onclick="removeRow(this)">✕</button>
+  </div>
+</template>
+
+<script>
+function calcRow(el){
+  const row = el.closest('.waste-row');
+  const sel = row.querySelector('select');
+  const wt = parseFloat(row.querySelector('input').value) || 0;
+  const opt = sel.options[sel.selectedIndex];
+  const pts = parseFloat(opt?.dataset.pts) || 0;
+  const isDisposal = opt?.dataset.disposal == '1';
+  const ptsDiv = row.querySelector('.pts');
+  if(isDisposal){
+    ptsDiv.textContent = 'DISPOSAL';
+    ptsDiv.classList.add('disposal');
+  } else {
+    ptsDiv.textContent = Math.floor(wt*pts) + ' pts';
+    ptsDiv.classList.remove('disposal');
+  }
+  calcAll();
+}
+function calcAll(){
+  let totalW=0, totalP=0, disposalW=0;
+  document.querySelectorAll('#rows .waste-row').forEach(r=>{
+    const wt = parseFloat(r.querySelector('input').value) || 0;
+    const sel = r.querySelector('select');
+    if(!sel.value) return;
+    const opt = sel.options[sel.selectedIndex];
+    const pts = parseFloat(opt?.dataset.pts) || 0;
+    if(opt?.dataset.disposal == '1') disposalW += wt;
+    else { totalW += wt; totalP += Math.floor(wt*pts); }
+  });
+  document.getElementById('totalPts').textContent = totalP + ' pts';
+  document.getElementById('totalText').textContent = totalW.toFixed(1) + ' kg → ' + totalP + ' pts' + (disposalW>0 ? ' + '+disposalW.toFixed(1)+'kg disposal' : '');
+  const d = document.getElementById('disposalText');
+  d.style.display = disposalW>0 ? 'block' : 'none';
+  if(disposalW>0) d.textContent = disposalW.toFixed(1) + 'kg disposal - no points';
+}
+function addRow(){
+  const tpl = document.getElementById('rowTemplate');
+  document.getElementById('rows').appendChild(tpl.content.cloneNode(true));
+}
+function removeRow(btn){
+  if(document.querySelectorAll('#rows .waste-row').length > 1){
+    btn.closest('.waste-row').remove(); calcAll();
+  } else alert("At least one row needed");
+}
+
+// THIS IS THE FIX
+function confirmReward(e){
+  let rows=[], disposalRows=[];
+  document.querySelectorAll('#rows .waste-row').forEach(r=>{
+    const sel = r.querySelector('select');
+    const opt = sel.options[sel.selectedIndex];
+    const wt = r.querySelector('input').value;
+    if(!sel.value || !wt) return;
+    if(opt?.dataset.disposal == '1') disposalRows.push(`${wt}kg ${opt.dataset.name} (DISPOSAL)`);
+    else rows.push(`${wt}kg ${opt.dataset.name}`);
+  });
+  if(rows.length==0 && disposalRows.length==0){
+    alert("Add at least one waste"); 
+    return false;
+  }
+  const total = document.getElementById('totalPts').textContent;
+  let msg = `Confirm Reward?\n\n`;
+  if(rows.length>0) msg += `Recyclable:\n${rows.join('\n')}\n\n`;
+  if(disposalRows.length>0) msg += `Disposal:\n${disposalRows.join('\n')}\n\n`;
+  msg += `Total: ${total}\n\nAdd to wallet?`;
+  
+  return confirm(msg); // <-- return true/false, form will submit only if true
+}
+</script>
+</body>
+</html>

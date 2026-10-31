@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EcoCycle Admin - Feedbacks & Complaints</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_dashboard.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pending_households.css') }}" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+    .stat-card { background: #fff; border: 1px solid #E5E7EB; border-radius: 14px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+    .stat-value { font-family: 'Fraunces', serif; font-size: 26px; font-weight: 700; display: block; margin-bottom: 4px; }
+    .stat-value.red { color: #DC2626; }
+    .stat-value.orange { color: #D97706; }
+    .stat-value.gold { color: #D98E2A; }
+    .stat-value.green { color: #059669; }
+    .stat-label { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Filter Bar */
+    .filter-section { background: #fff; border: 1px solid #E5E7EB; border-radius: 14px; padding: 16px 20px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 14px; }
+    .filter-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+
+    .tabs-group { display: flex; gap: 8px; flex-wrap: wrap; }
+    .tab-btn { padding: 8px 16px; border-radius: 30px; border: 1.5px solid #E5E7EB; background: #fff; color: #374151; font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+    .tab-btn:hover { border-color: #1A3C34; background: #F9FAFB; }
+    .tab-btn.active { background: #1A3C34; color: #fff; border-color: #1A3C34; }
+
+    .search-input-wrap { position: relative; min-width: 280px; }
+    .search-input-wrap input { width: 100%; padding: 9px 14px 9px 36px; border-radius: 20px; border: 1.5px solid #E5E7EB; font-family: 'Inter', sans-serif; font-size: 13px; outline: none; }
+    .search-input-wrap input:focus { border-color: #1A3C34; }
+    .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #9CA3AF; font-size: 14px; }
+
+    /* Feedback Item Cards */
+    .feedbacks-list { display: flex; flex-direction: column; gap: 14px; }
+    .feedback-card { background: #fff; border: 1px solid #E5E7EB; border-radius: 14px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border-left: 6px solid #D1D5DB; transition: all 0.2s ease; }
+    .feedback-card.Complaint { border-left-color: #EF4444; }
+    .feedback-card.Suggestion { border-left-color: #3B82F6; }
+    .feedback-card.Rating { border-left-color: #F59E0B; }
+
+    .fb-header-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .fb-title-wrap { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .fb-subject { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 700; color: #111827; margin: 0; }
+
+    .badge-status { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; }
+    .badge-status.Pending { background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
+    .badge-status.Resolved { background: #D1FAE5; color: #065F46; border: 1px solid #6EE7B7; }
+
+    .badge-type { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
+    .badge-type.Complaint { background: #FEE2E2; color: #991B1B; }
+    .badge-type.Suggestion { background: #E0F2FE; color: #075985; }
+    .badge-type.Rating { background: #FEF3C7; color: #92400E; }
+
+    .fb-body { font-size: 14px; color: #374151; line-height: 1.6; margin: 10px 0; background: #F9FAFB; padding: 12px 16px; border-radius: 10px; border: 1px solid #F3F4F6; }
+
+    .fb-meta { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #6B7280; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #F3F4F6; }
+    .household-info { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .household-name { font-weight: 700; color: #111827; }
+
+    .action-btns { display: flex; gap: 8px; align-items: center; }
+    .btn-act { padding: 6px 14px; border: none; border-radius: 8px; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 12px; cursor: pointer; transition: background 0.15s; }
+    .btn-act-resolve { background: #10B981; color: #fff; }
+    .btn-act-resolve:hover { background: #059669; }
+    .btn-act-pending { background: #F59E0B; color: #fff; }
+    .btn-act-pending:hover { background: #D97706; }
+
+    .empty-state { background: #fff; border: 1px dashed #D1D5DB; border-radius: 14px; padding: 40px; text-align: center; color: #6B7280; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon">EC</div><span>EcoCycle Admin</span></div>
+    <nav class="sidebar-nav">
+      <p class="nav-section">OVERVIEW</p>
+      <a href="{{ url_for('admin_dashboard') }}" class="nav-item">Dashboard</a>
+      <p class="nav-section">HOUSEHOLDS</p>
+      <a href="{{ url_for('pending_households') }}" class="nav-item"><span>Pending Approvals</span><span class="badge">{{ pending_count }}</span></a>
+      <a href="{{ url_for('view_households') }}" class="nav-item">All Households</a>
+      <a href="{{ url_for('admin_feedbacks') }}" class="nav-item active">Feedbacks & Complaints 💬</a>
+       </nav>
+  </aside>
+
+  <!-- Main Area -->
+  <main class="main">
+    <header class="main-header">
+      <div>
+        <h1 class="page-title">Feedbacks & Complaints</h1>
+        <p class="page-subtitle">MANAGE HOUSEHOLD FEEDBACK, COMPLAINTS, AND SERVICE RATINGS</p>
+      </div>
+
+      
+    </header>
+
+  
+    
+
+    <!-- Filters & Search Bar -->
+    <section class="filter-section">
+      <div class="filter-row">
+        <!-- Status Tabs -->
+        <div class="tabs-group" id="statusTabs">
+          <button class="tab-btn active" onclick="setStatusFilter('All', this)">All Statuses</button>
+          <button class="tab-btn" onclick="setStatusFilter('Pending', this)">⏳ Pending ({{ feedback_pending }})</button>
+          <button class="tab-btn" onclick="setStatusFilter('Resolved', this)">✅ Resolved ({{ resolved_count }})</button>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search-input-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="Search by name, phone, ward, subject..." onkeyup="applyFilters()">
+        </div>
+      </div>
+
+      <div class="filter-row">
+        <!-- Type Tabs -->
+        <div class="tabs-group" id="typeTabs">
+          <span style="font-family:'JetBrains Mono'; font-size:12px; color:#6B7280; align-self:center; font-weight:600;">TYPE:</span>
+          <button class="tab-btn active" onclick="setTypeFilter('All', this)">All Types</button>
+          <button class="tab-btn" onclick="setTypeFilter('Complaint', this)">🚨 Complaints ({{ complaint_count }})</button>
+          <button class="tab-btn" onclick="setTypeFilter('Suggestion', this)">💡 Suggestions ({{ suggestion_count }})</button>
+          <button class="tab-btn" onclick="setTypeFilter('Rating', this)">⭐ Ratings ({{ rating_count }})</button>
+        </div>
+        <span style="font-family:'JetBrains Mono'; font-size:12px; color:#6B7280;" id="visibleCountPill">Showing {{ feedbacks|length }} items</span>
+      </div>
+    </section>
+
+    <!-- Feedbacks List -->
+    <div class="feedbacks-list" id="feedbacksList">
+      {% for f in feedbacks %}
+      <div class="feedback-card {{ f.type }}" data-status="{% if f.type == 'Rating' %}Rating{% else %}{{ f.status }}{% endif %}" data-type="{{ f.type }}" data-id="{{ f.id }}" data-search="{{ f.household_name|lower }} {{ f.household_email|lower }} {{ f.phone }} {{ f.ward_no }} {{ f.area|lower }} {{ f.subject|lower }} {{ (f.message or '')|lower }}">
+        <div class="fb-header-row">
+          <div class="fb-title-wrap">
+            {% if f.type != 'Rating' %}
+            <span class="badge-status {{ f.status }}" id="badge-{{ f.id }}">{{ f.status }}</span>
+            {% endif %}
+            <span class="badge-type {{ f.type }}">{{ f.type }}</span>
+            <h4 class="fb-subject">{{ f.subject }}</h4>
+          </div>
+          {% if f.rating %}
+          <span style="font-family:'JetBrains Mono'; font-size:14px; font-weight:700; color:#D97706; background:#FEF3C7; padding:4px 12px; border-radius:20px;">⭐ {{ f.rating }} / 5</span>
+          {% endif %}
+        </div>
+
+        {% if f.message %}
+        <div class="fb-body">
+          {{ f.message }}
+        </div>
+        {% endif %}
+
+        <div class="fb-meta">
+          <div class="household-info">
+            👤 <span class="household-name">{{ f.household_name }}</span>
+            <span>· 📧 {{ f.household_email }}</span>
+            <span>· 📞 {{ f.phone }}</span>
+            <span>· 📍 Ward {{ f.ward_no }}, {{ f.area }}</span>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:14px;">
+            <span style="color:#9CA3AF;">🕒 {{ f.created_at.strftime('%d %b %Y, %I:%M %p') if f.created_at else '' }}</span>
+            
+            <div class="action-btns" id="actions-{{ f.id }}">
+              {% if f.type == 'Rating' %}
+                <span style="color:#D97706; font-weight:700; font-family:'JetBrains Mono'; font-size:12px;">★ RATING RECEIVED</span>
+              {% else %}
+                {% if f.status == 'Pending' %}
+                  <button class="btn-act btn-act-resolve" onclick="updateStatus({{ f.id }}, 'Resolved')">Mark Resolved</button>
+                {% else %}
+                  <button class="btn-act btn-act-pending" onclick="updateStatus({{ f.id }}, 'Pending')">Reopen</button>
+                  <span style="color:#059669; font-weight:700; font-family:'JetBrains Mono'; font-size:12px;">✓ RESOLVED</span>
+                {% endif %}
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div style="font-size:36px; margin-bottom:8px;">💬</div>
+        <h3 style="font-family:'Fraunces'; margin-bottom:4px;">No Feedbacks Found</h3>
+        <p style="font-family:'JetBrains Mono'; font-size:12px;">No household feedback or complaints submitted yet.</p>
+      </div>
+      {% endfor %}
+    </div>
+  </main>
+</div>
+
+<script>
+let currentStatusFilter = 'All';
+let currentTypeFilter = 'All';
+
+function toggleMenu(){
+  const menu = document.getElementById('userMenu');
+  if(menu) menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+}
+
+window.addEventListener('click', function(e){
+  if(!e.target.closest('.user-chip-wrapper')){
+    const menu = document.getElementById('userMenu');
+    if(menu) menu.style.display = 'none';
+  }
+});
+
+function setStatusFilter(status, btn) {
+  currentStatusFilter = status;
+  document.querySelectorAll('#statusTabs .tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+
+function setTypeFilter(type, btn) {
+  currentTypeFilter = type;
+  document.querySelectorAll('#typeTabs .tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+
+function applyFilters() {
+  const query = document.getElementById('searchInput').value.toLowerCase().trim();
+  const cards = document.querySelectorAll('.feedback-card');
+  let visibleCount = 0;
+
+  cards.forEach(card => {
+    const cardStatus = card.dataset.status;
+    const cardType = card.dataset.type;
+    const searchData = card.dataset.search;
+
+    const matchesStatus = (currentStatusFilter === 'All' || cardStatus === currentStatusFilter || cardType === 'Rating');
+    const matchesType = (currentTypeFilter === 'All' || cardType === currentTypeFilter);
+    const matchesQuery = (!query || searchData.includes(query));
+
+    if (matchesStatus && matchesType && matchesQuery) {
+      card.style.display = 'block';
+      visibleCount++;
+    } else {
+      card.style.display = 'none';
+    }
+  });
+
+  const countPill = document.getElementById('visibleCountPill');
+  if (countPill) countPill.textContent = `Showing ${visibleCount} items`;
+}
+
+async function updateStatus(fid, newStatus) {
+  try {
+    const res = await fetch(`/admin/feedback/update/${fid}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus })
+    });
+    const data = await res.json();
+    
+    if (data.success) {
+      // Update card dataset & badge
+      const card = document.querySelector(`.feedback-card[data-id="${fid}"]`);
+      if (card) {
+        card.dataset.status = newStatus;
+        
+        const badge = document.getElementById(`badge-${fid}`);
+        if (badge) {
+          badge.className = `badge-status ${newStatus}`;
+          badge.textContent = newStatus;
+        }
+
+        // Update actions buttons dynamically
+        const actionsDiv = document.getElementById(`actions-${fid}`);
+        if (actionsDiv) {
+          if (newStatus === 'Pending') {
+            actionsDiv.innerHTML = `
+              <button class="btn-act btn-act-resolve" onclick="updateStatus(${fid}, 'Resolved')">Mark Resolved</button>
+            `;
+          } else {
+            actionsDiv.innerHTML = `
+              <button class="btn-act btn-act-pending" onclick="updateStatus(${fid}, 'Pending')">Reopen</button>
+              <span style="color:#059669; font-weight:700; font-family:'JetBrains Mono'; font-size:12px;">✓ RESOLVED</span>
+            `;
+          }
+        }
+      }
+
+      applyFilters();
+
+    } else {
+      alert("Failed to update status: " + (data.message || 'Unknown error'));
+    }
+  } catch (err) {
+    alert("Network error: " + err.message);
+  }
+}
+</script>
+</body>
+</html>

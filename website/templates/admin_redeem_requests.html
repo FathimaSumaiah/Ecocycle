@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EcoCycle Admin - Redeem Requests</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_dashboard.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+   .upi-pill{ background:#E8F5E9; color:#1B5E20; padding:5px 10px; border-radius:8px; font-weight:700; font-size:12px; display:inline-block; cursor:pointer; }
+   .badge-pending{ background:#FFF3CD; color:#856404; padding:4px 10px; border-radius:20px; font-size:10px; font-weight:800; }
+   .badge-credited{ background:#D4EDDA; color:#155724; padding:4px 10px; border-radius:20px; font-size:10px; font-weight:800; }
+   .badge-rejected{ background:#F8D7DA; color:#721C24; padding:4px 10px; border-radius:20px; font-size:10px; font-weight:800; }
+   .btn-credit{ background:#2E7D32; color:#fff; border:none; padding:7px 14px; border-radius:8px; cursor:pointer; font-weight:600; font-size:12px; }
+   .btn-reject{ background:#fff; color:#C62828; border:1px solid #FFCDD2; padding:5px 10px; border-radius:8px; font-size:11px; text-decoration:none; display:inline-block; margin-top:6px; }
+   .txn-input{ width:130px; padding:6px 8px; border-radius:7px; border:1px solid #ccc; font-size:12px; }
+   .mono{ font-family:'JetBrains Mono'; font-size:12px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- SIDEBAR - SAME AS YOURS -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-icon">EC</div>
+        <span>EcoCycle Admin</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <p class="nav-section">OVERVIEW</p>
+        <a href="{{ url_for('admin_dashboard') }}" class="nav-item" style="color: inherit; text-decoration: none;">Dashboard</a>
+
+        <p class="nav-section">HOUSEHOLDS</p>
+        <a href="{{ url_for('pending_households') }}" class="nav-item" style="color: inherit; text-decoration: none;">
+            <span>Pending Approvals</span>
+            <span class="badge">{{ pending_count }}</span>
+        </a>
+        <a href="{{ url_for('view_households') }}" class="nav-item" style="color: inherit; text-decoration: none;">All Households</a>
+
+        
+
+        <p class="nav-section">REWARDS</p>
+        <a class="nav-item active">Redeem Requests</a>
+      </nav>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+      <header class="main-header">
+        <div>
+          <h1 class="page-title">Redeem Requests</h1>
+          <p class="page-subtitle">HOUSEHOLD PAYOUTS · MANUAL UPI TRANSFER</p>
+        </div>
+        
+      </header>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for cat, msg in messages %}
+            <div style="padding:10px 14px; background:#D4EDDA; border-radius:10px; margin-bottom:16px; font-size:13px;">{{ msg }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <!-- STATS -->
+      <section class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-value orange">₹{{ pending_amount or 0 }}</span><span class="stat-label">Pending Payout</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value">{{ requests|length }}</span><span class="stat-label">Total Requests</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value teal">{{ requests|selectattr('9','equalto','Credited')|list|length }}</span><span class="stat-label">Credited</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value red">{{ requests|selectattr('9','equalto','Pending')|list|length }}</span><span class="stat-label">Pending Now</span>
+        </div>
+      </section>
+
+      <!-- REDEEM TABLE -->
+      <section class="card">
+        <div class="card-head">
+          <h2>Household Redeem Requests</h2>
+          <div class="legend"><span class="dot pending"></span> Pending <span class="dot approved"></span> Credited <span class="dot collected"></span> Rejected</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>HOUSEHOLD</th>
+                <th>CONTACT / UPI</th>
+                <th>POINTS → ₹</th>
+                <th>DATE</th>
+                <th>STATUS</th>
+                <th>ACTION</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% if requests %}
+              {% for r in requests %}
+              <tr>
+                <td><strong>#{{ r[0] }}</strong></td>
+                <td>
+                  <strong>{{ r[1] }}</strong><br>
+                  <span class="mono">H.No {{ r[2] }} · Ward {{ r[3] }} · {{ r[4] }}</span>
+                </td>
+                <td>
+                  📱 {{ r[5] }}<br>
+                  <span class="upi-pill" onclick="copyUpi('{{ r[8] }}')" title="Click to copy">{{ r[8] }} 📋</span>
+                </td>
+                <td>
+                  <strong>{{ r[6] }} pts</strong><br>
+                  <span style="color:#2E7D32; font-weight:800;">₹{{ r[7] }}</span>
+                </td>
+                <td class="mono">{{ r[10].strftime('%d-%m-%Y %H:%M') if r[10] else '-' }}</td>
+                <td>
+                  {% if r[9]=='Pending' %}<span class="badge-pending">PENDING</span>
+                  {% elif r[9]=='Credited' %}
+                    <span class="badge-credited">CREDITED</span><br><span class="mono">{{ r[11] }}</span>
+                    {% if r[12] %}
+                      <br><a href="{{ url_for('static', filename=r[12]) }}" target="_blank" style="font-size:11px; color:#1B5E20; text-decoration:underline; font-weight:700;">📷 View Payment SS</a>
+                    {% endif %}
+                  {% else %}<span class="badge-rejected">REJECTED</span>{% endif %}
+                </td>
+                <td>
+                  {% if r[9]=='Pending' %}
+                  <form method="POST" action="{{ url_for('admin_redeem_credited', req_id=r[0]) }}" enctype="multipart/form-data" style="display:flex; flex-direction:column; gap:6px; align-items:flex-start;">
+                    <div style="display:flex; gap:6px; align-items:center;">
+                      <input type="text" name="txn_id" placeholder="UPI Txn ID" required minlength="4" class="txn-input">
+                      <button type="submit" class="btn-credit">Credited ✓</button>
+                    </div>
+                    <div>
+                      <label style="font-size:10px; font-family:'JetBrains Mono'; color:#555;">Payment Screenshot:</label>
+                      <input type="file" name="payment_screenshot" accept="image/*,.pdf" style="font-size:11px; width:160px;">
+                    </div>
+                  </form>
+                  <a href="{{ url_for('admin_redeem_rejected', req_id=r[0]) }}" class="btn-reject" onclick="return confirm('Refund {{ r[6] }} pts?')">Reject & Refund</a>
+                  {% else %}
+                  <span class="mono">
+                    {% if r[12] %}
+                      <a href="{{ url_for('static', filename=r[12]) }}" target="_blank" style="color:#2E7D32; font-weight:700; text-decoration:none;">Screenshot ✓</a>
+                    {% else %}-{% endif %}
+                  </span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr><td colspan="7" style="text-align:center; padding:30px;">No redeem requests found.</td></tr>
+            {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+<div id="profileMenu" class="profile-menu">
+    <a href="{{ url_for('logout') }}">🚪 Logout</a>
+</div>
+<script>
+function copyUpi(upi){
+  navigator.clipboard.writeText(upi);
+  alert('Copied UPI: '+upi+' - Pay via GPay/PhonePe then paste Txn ID');
+}
+function toggleMenu() {
+    const menu = document.getElementById("profileMenu");
+    menu.style.display = menu.style.display === "block"? "none" : "block";
+}
+document.addEventListener("click", function(e){
+    if(!e.target.closest(".user-chip") &&!e.target.closest(".profile-menu")){
+        document.getElementById("profileMenu").style.display = "none";
+    }
+});
+</script>
+</body>
+</html>

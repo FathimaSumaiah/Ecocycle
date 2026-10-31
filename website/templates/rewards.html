@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>EcoCycle - Rewards</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/household_dashboard.css') }}"/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+.reward-hero{display:grid; grid-template-columns:1.2fr 0.8fr; gap:18px; margin-bottom:18px;}
+@media(max-width:900px){.reward-hero{grid-template-columns:1fr;}}
+.wallet-card{background:#0B2E1B; color:#EAF6EC; border-radius:18px; padding:22px; position:relative; overflow:hidden;}
+.wallet-card.glow{position:absolute; right:-30px; top:-30px; width:180px; height:180px; background:#2ECC71; filter:blur(60px); opacity:0.25; border-radius:50%;}
+.wallet-label{font-family:'JetBrains Mono'; font-size:11px; letter-spacing:1px; opacity:0.7; text-transform:uppercase;}
+.wallet-pts{font-family:'Fraunces'; font-size:42px; font-weight:700; margin:6px 0; color:#fff;}
+.wallet-pts small{font-size:16px; color:#A9D4B6; font-family:'Inter';}
+.wallet-sub{font-size:12px; color:#8FC0A0; font-family:'JetBrains Mono';}
+.redeem-card{background:#fff; border:1px solid #C5E0CA; border-radius:18px; padding:20px;}
+.redeem-card h3{margin:0 0 10px; font-family:'Fraunces'; font-size:18px; color:#0B2E1B;}
+.input-row{display:flex; gap:10px; margin-top:12px;}
+.input-row input{flex:1; padding:12px 14px; border:1px solid #C5E0CA; border-radius:10px; font-size:14px;}
+.btn-redeem{width:100%; margin-top:12px; background:#14532D; color:#fff; border:none; padding:12px; border-radius:10px; font-weight:700; cursor:pointer;}
+.btn-redeem:disabled{background:#ccc; cursor:not-allowed;}
+.status-badge{font-family:'JetBrains Mono'; font-size:10px; padding:3px 8px; border-radius:20px; text-transform:uppercase;}
+.status-badge.Pending{background:#FFF0D6; color:#D98E2A;}
+.status-badge.Approved{background:#D6EADF; color:#14532D;}
+.status-badge.Rejected{background:#FCE5E2; color:#C94A3A;}
+.log-table{width:100%; border-collapse:collapse;}
+.log-table th{font-family:'JetBrains Mono'; font-size:10px; text-transform:uppercase; letter-spacing:1px; color:#8FB09D; text-align:left; padding:10px 8px; border-bottom:1px solid #E6F0E8;}
+.log-table td{padding:11px 8px; font-size:13px; border-bottom:1px solid #F0F5F1;}
+.flash-dark{max-width:420px; margin:0 auto 14px auto; padding:10px 14px; border-radius:10px; background:#0B2E1B; color:#EAF6EC; font-size:13px; font-family:'JetBrains Mono'; text-align:center;}
+.flash-error{background:#3A1A1A; border:1px solid #C94A3A;}
+</style>
+</head>
+<body>
+<div class="household-app">
+  <header class="h-header">
+    <div class="h-logo">
+      <img src="{{ url_for('static', filename='images/eco_cycle_logo.webp') }}" alt="logo" style="width:36px; height:36px; border-radius:10px; background:#fff; padding:3px;"> EcoCycle <small>Household</small>
+    </div>
+    <div class="h-nav">
+      <a href="/household_dashboard">Home</a>
+      <a href="/rewards" class="active">Rewards</a>
+    <a href="/household/feedback" class="menu-btn">Feedbacks</a>    </div>
+    <div class="h-profile">
+      <div class="points-pill">🌿 {{ household[6] }} pts</div>
+      <a href="/household_profile" style="text-decoration:none; color:inherit;"><div class="avatar-circle">{{ household[1][:2]|upper }}</div></a>
+    </div>
+  </header>
+
+  <main class="h-main" style="max-width:1100px; margin:0 auto; padding:18px 20px 40px;">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+        <div class="flash-dark {% if cat=='error' %}flash-error{% endif %}">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <div class="reward-hero">
+      <div class="wallet-card">
+        <div class="glow"></div>
+        <div class="wallet-label">Available Balance</div>
+        <div class="wallet-pts">{{ household[6] }} <small>pts</small> <span style="font-size:20px; color:#2ECC71;">= ₹{{ household[6] }}</span></div>
+        <div class="wallet-sub">Total Earned: {{ totals[1] or 0 }} pts · {{ totals[0] or 0 }} kg recycled ♻</div>
+        <div style="margin-top:16px; display:flex; gap:8px;">
+          <span style="background:#143A25; border:1px solid #215E3A; border-radius:20px; padding:5px 10px; font-size:11px; font-family:'JetBrains Mono';">1 pt = ₹1</span>
+          <span style="background:#143A25; border:1px solid #215E3A; border-radius:20px; padding:5px 10px; font-size:11px; font-family:'JetBrains Mono';">1 pt = ₹1</span>
+        </div>
+      </div>
+
+      <div class="redeem-card">
+        <h3>💸 Redeem to Bank</h3>
+        <p style="font-size:12px; color:#5A7E67; margin:4px 0 0;">Money will be credited to your UPI ID within 24h after admin approval.</p>
+        <form method="POST" action="/redeem" id="redeemForm" onsubmit="return confirmRedeem(this, event)">
+          <label style="font-size:11px; font-family:'JetBrains Mono'; text-transform:uppercase; margin-top:14px; display:block; color:#14532D;">UPI ID</label>
+          <input type="text" name="upi_id" placeholder="ex: rikas@oksbi / 98765@ybl" value="{{ household[5] or '' }}" required pattern="^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$" title="Enter a valid UPI ID (e.g. name@upi)" style="width:100%; padding:11px; border:1px solid #C5E0CA; border-radius:10px; margin-top:4px;">
+
+          <label style="font-size:11px; font-family:'JetBrains Mono'; text-transform:uppercase; margin-top:12px; display:block; color:#14532D;">Points to redeem</label>
+          <div class="input-row">
+            <input type="number" name="points" id="ptsInput" min="1" max="{{ household[6] }}" placeholder="Enter points" required oninput="document.getElementById('rupeesPreview').textContent='₹'+(this.value||0)">
+            <div style="background:#F3FAF5; border:1px solid #C5E0CA; border-radius:10px; padding:11px 14px; font-weight:700; font-family:'JetBrains Mono'; color:#14532D;" id="rupeesPreview">₹0</div>
+          </div>
+          <button class="btn-redeem" type="submit" {% if household[6] < 1 %}disabled{% endif %}>{% if household[6] < 1 %}No points to redeem{% else %}Request ₹ Redeem{% endif %}</button>
+        </form>
+        <script>
+        function confirmRedeem(form, event){
+          let upi = form.upi_id.value.trim();
+          let pts = parseInt(form.points.value) || 0;
+          if(!/^.+@.+$/.test(upi)){
+            alert("Please enter a valid UPI ID (e.g. name@bank)");
+            event.preventDefault(); return false;
+          }
+          if(pts < 1){
+            alert("Please enter at least 1 point to redeem.");
+            event.preventDefault(); return false;
+          }
+          return confirm(`Confirm redeem ${pts} pts = ₹${pts} to ${upi}?`);
+        }
+        </script>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px;">
+      <section class="card" style="background:#fff; border:1px solid #C5E0CA; border-radius:16px; padding:18px;">
+        <div class="card-head" style="display:flex; justify-content:space-between; margin-bottom:10px;"><h2 style="font-family:'Fraunces'; margin:0;">♻ Collection History</h2><span style="font-family:'JetBrains Mono'; font-size:11px; color:#8FB09D;">{{ logs|length }} entries</span></div>
+        <div style="max-height:420px; overflow:auto;">
+        <table class="log-table">
+          <tr><th>Date</th><th>Waste</th><th>kg</th><th>Points</th></tr>
+          {% for l in logs %}
+          <tr><td style="font-family:'JetBrains Mono'; font-size:11px;">{{ l[0].strftime('%d %b, %I:%M %p') if l[0] else '' }}</td><td><b>{{ l[1] }}</b><div style="font-size:10px; color:#888;">by {{ l[4] }}</div></td><td>{{ l[2] }} kg</td><td style="color:#14532D; font-weight:700;">+{{ l[3] }}</td></tr>
+          {% else %}
+          <tr><td colspan="4" style="text-align:center; padding:30px; color:#999;">No rewards yet</td></tr>
+          {% endfor %}
+        </table>
+        </div>
+      </section>
+
+      <section class="card" style="background:#fff; border:1px solid #C5E0CA; border-radius:16px; padding:18px;">
+        <div class="card-head" style="display:flex; justify-content:space-between; margin-bottom:10px;"><h2 style="font-family:'Fraunces'; margin:0;">💳 Payout History</h2><span style="font-family:'JetBrains Mono'; font-size:11px; color:#8FB09D;">{{ redeems|length }} requests</span></div>
+        <div style="max-height:420px; overflow:auto;">
+        <table class="log-table">
+          <tr><th>Date</th><th>Points</th><th>₹</th><th>Status</th></tr>
+          {% for r in redeems %}
+          <tr>
+            <td style="font-family:'JetBrains Mono'; font-size:11px;">{{ r[5].strftime('%d %b') if r[5] else '' }}<div style="font-size:10px; color:#888;">{{ r[4] }}</div></td>
+            <td>{{ r[1] }}</td>
+            <td><b>₹{{ r[2] }}</b></td>
+            <td>
+              <span class="status-badge {{ r[3] }}">{{ r[3] }}</span>
+              {% if r[6] %}<div style="font-size:10px; color:#666; margin-top:2px;">Txn: {{ r[6] }}</div>{% endif %}
+              {% if r[7] %}<div style="margin-top:4px;"><a href="{{ url_for('static', filename=r[7]) }}" target="_blank" style="font-size:10px; background:#E8F5E9; color:#1B5E20; padding:2px 6px; border-radius:4px; text-decoration:none; font-weight:700; display:inline-block;">📷 Payment Proof SS</a></div>{% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" style="text-align:center; padding:30px; color:#999;">No redeem yet</td></tr>
+          {% endfor %}
+        </table>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+</body>
+</html>

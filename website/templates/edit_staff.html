@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Edit Recycling Staff - EcoCycle Admin</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pending_households.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/add_worker.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/add_staff.css') }}" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon">EC</div><span>EcoCycle Admin</span></div>
+    <nav class="sidebar-nav">
+      <p class="nav-section">OVERVIEW</p>
+      <a href="/admin_dashboard" class="nav-item">Dashboard</a>
+      <p class="nav-section">WORKFORCE</p>
+      <a href="/view_staff" class="nav-item active">Recycling Staff</a>
+      <a href="/add_staff" class="nav-item">Add Recycling Staff</a>
+      <a href="/logout" class="nav-item">Logout</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="main-header">
+      <div>
+        <h1 class="page-title">Edit Recycling Staff</h1>
+        <p class="page-subtitle">RECYCLING CENTER · UPDATE STAFF #{{ staff[0] }}</p>
+      </div>
+      <span class="ward-pill">EDIT MODE</span>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash-banner {{ category }}" style="margin:16px 0; padding:12px 16px; border-radius:8px; background:{% if category=='success' %}#E8F5E9{% else %}#FFEBEE{% endif %}; border:1px solid {% if category=='success' %}#C8E6C9{% else %}#EF9A9A{% endif %}; font-family:'JetBrains Mono', monospace; font-size:12px;">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <section class="form-card">
+      <div class="form-head">
+        <div><h2>Staff Details</h2><p>Update recycling center staff information</p></div>
+        <span class="points-badge">ID #{{ staff[0] }}</span>
+      </div>
+
+      <form method="POST" class="form-body" id="editStaffForm">
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Full Name</label>
+            <input type="text" name="full_name" value="{{ staff[1] }}" required minlength="2">
+          </div>
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" name="email" value="{{ staff[2] }}" required>
+          </div>
+          <div class="form-group">
+            <label>Phone Number</label>
+            <input type="tel" name="phone" value="{{ staff[3] }}" maxlength="10" pattern="[6-9][0-9]{9}" required>
+          </div>
+          <div class="form-group">
+            <label>Street / House</label>
+            <input type="text" name="street" value="{{ staff[4] }}" required>
+          </div>
+          <div class="form-group">
+            <label>City</label>
+            <input type="text" name="city" value="{{ staff[5] }}" required>
+          </div>
+          <div class="form-group">
+            <label>District</label>
+            <input type="text" name="district" value="{{ staff[6] }}" required>
+          </div>
+          <div class="form-group">
+            <label>Pincode</label>
+            <input type="text" name="pincode" value="{{ staff[7] }}" maxlength="6" pattern="[0-9]{6}" required>
+          </div>
+          <div class="form-group">
+            <label>Qualification</label>
+            <input type="text" name="qualification" value="{{ staff[9] if staff[9] else '' }}" placeholder="e.g. Graduate, Diploma" required>
+          </div>
+          <div class="form-group full">
+            <label>Password</label>
+            <input type="text" name="password" value="{{ staff[10] }}" required minlength="6">
+          </div>
+        </div>
+        <div class="form-footer">
+          <a href="/view_staff" class="btn-secondary" style="text-decoration:none;">CANCEL</a>
+          <button type="submit" class="btn-primary">UPDATE STAFF →</button>
+        </div>
+      </form>
+    </section>
+  </main>
+</div>
+<script>
+document.getElementById('editStaffForm').addEventListener('submit', function(e){
+    let phone = this.phone.value.trim();
+    let pincode = this.pincode.value.trim();
+    if(!/^[6-9][0-9]{9}$/.test(phone)){
+        e.preventDefault(); alert("Please enter a valid 10-digit mobile number starting with 6-9."); return;
+    }
+    if(!/^[0-9]{6}$/.test(pincode)){
+        e.preventDefault(); alert("Please enter a valid 6-digit PIN code."); return;
+    }
+});
+</script>
+</body>
+</html>

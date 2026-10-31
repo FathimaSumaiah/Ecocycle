@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EcoCycle Admin - Today's Requests</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_dashboard.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .status-pending { background:#E8A87C; color:#1A3C34; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; display:inline-block; }
+    .status-completed { background:#B5C99A; color:#1A3C34; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; display:inline-block; }
+    .status-assigned { background:#1A3C34; color:#fff; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; display:inline-block; }
+    .status-rejected { background:#C94C4C; color:#fff; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; display:inline-block; }
+    .mono-small { font-family:'JetBrains Mono'; font-size:11px; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 22px; }
+    .stat-card { background: #fff; border: 1px solid #E5E7EB; border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+    .stat-value { font-family: 'Fraunces', serif; font-size: 26px; font-weight: 700; display: block; margin-bottom: 4px; }
+    .stat-value.red { color: #DC2626; }
+    .stat-value.orange { color: #D97706; }
+    .stat-value.teal { color: #2A6B5E; }
+    .stat-value.green { color: #059669; }
+    .stat-label { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .table-wrap { overflow-x: auto; background: #fff; border: 1px solid #E5E7EB; border-radius: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th { background: #F9FAFB; font-family: 'JetBrains Mono', monospace; font-size: 11px; text-transform: uppercase; color: #4B5563; padding: 14px 18px; border-bottom: 1px solid #E5E7EB; }
+    td { padding: 14px 18px; font-size: 13px; color: #111827; border-bottom: 1px solid #F3F4F6; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+
+    .worker-on-leave-text { color: #DC2626; font-weight: 700; }
+    .badge-leave-red { background: #FEE2E2; color: #DC2626; border: 1px solid #FCA5A5; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; display: inline-block; margin-top: 3px; }
+    .badge-stuck-warning { background: #FEF2F2; color: #991B1B; border: 1px solid #FCA5A5; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; display: inline-block; margin-top: 4px; }
+
+    .user-chip-wrapper{position:relative;display:inline-block}
+    .user-chip{display:flex;align-items:center;gap:8px;background:#fff;padding:6px 14px;border-radius:25px;font-weight:600;cursor:pointer;border:1px solid #E5E7EB}
+    .avatar{width:28px;height:28px;background:#1A3C34;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800}
+    .user-dropdown{display:none;position:absolute;right:0;top:48px;background:#FFFFFF;min-width:180px;border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,0.18);z-index:999;overflow:hidden;border:1px solid #E5E7EB}
+    .user-dropdown.show{display:block}
+    .profile-link{display:block;padding:12px 16px;text-decoration:none;color:#1A3C34;font-size:14px;font-weight:500;background:#fff}
+    .profile-link:hover{background:#F3F4F6}
+    .logout-red{display:block;margin:0;padding:12px 16px;text-align:left;background:#DC2626;color:#fff!important;text-decoration:none;font-weight:700;font-size:14px;}
+    .logout-red:hover{background:#B91C1C;}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="sidebar-logo"><div class="logo-icon">EC</div><span>EcoCycle Admin</span></div>
+      <nav class="sidebar-nav">
+        <p class="nav-section">OVERVIEW</p>
+
+        <a href="{{ url_for('admin_dashboard') }}" class="nav-item" style="color: inherit; text-decoration: none;">Dashboard</a>
+
+
+        <a href="{{ url_for('admin_todays_requests') }}" class="nav-item active">📋 Today's Requests</a>
+       </nav>
+    </aside>
+
+    <main class="main">
+      <header class="main-header">
+        <div>
+          <h1 class="page-title">Today's Requests</h1>
+          <p class="page-subtitle">{{ today_date }} · All incoming collection requests for today</p>
+        </div>
+        <div class="user-chip-wrapper">
+          <div class="user-chip" onclick="toggleMenu()">
+            <span class="avatar">{{ session['admin_name'][0]|upper }}</span>
+            {{ session['admin_name'] }}
+          </div>
+          <div id="userMenu" class="user-dropdown">
+            <a href="/admin_profile" class="profile-link">👤 View Profile</a>
+            <a href="/logout" class="logout-red">Logout</a>
+          </div>
+        </div>
+      </header>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for cat, msg in messages %}
+            <div style="background:{% if cat=='success' %}#10B981{% else %}#EF4444{% endif %}; color:#fff; padding:12px 18px; border-radius:10px; margin-bottom:18px; font-weight:600; font-size:13px;">
+              {{ msg }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <section class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-value">{{ total_count }}</span>
+          <span class="stat-label">Total Requests Today</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value orange">{{ pending_req_count }}</span>
+          <span class="stat-label">Pending Requests</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value red">{{ on_leave_count }}</span>
+          <span class="stat-label">Worker On Leave</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value red">{{ stuck_count }}</span>
+          <span class="stat-label">Pending > 1 Hour</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value green">{{ completed_req_count }}</span>
+          <span class="stat-label">Completed Today</span>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head" style="display:flex; justify-content:space-between; align-items:center;">
+          <h2>All Requests Today ({{ total_count }})</h2>
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="searchInput" placeholder="Search household or worker..." onkeyup="filterRequestsTable()" style="padding:6px 12px; border:1px solid #E5E7EB; border-radius:8px; font-size:12px; min-width:220px;">
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table id="requestsTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>WORKER NAME</th>
+                <th>HOUSEHOLD (Name / Ward / Area / H.No)</th>
+                <th>STATUS</th>
+                <th>WASTE TYPE</th>
+                <th>KG</th>
+                <th>POINTS EARNED</th>
+                <th>TIME</th>
+                <th>REASSIGN WORKER</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in todays_requests %}
+              <tr>
+                <td class="mono">{{ loop.index }}</td>
+                <td>
+                  {% if r['is_worker_on_leave'] %}
+                    <strong class="worker-on-leave-text">{{ r['worker_name'] or 'Not Assigned' }}</strong>
+                    <br><span class="badge-leave-red">🔴 ON LEAVE TODAY</span>
+                  {% else %}
+                    <strong>{{ r['worker_name'] or 'Not Assigned' }}</strong>
+                  {% endif %}
+                  <br><span class="mono-small" style="color:#8B8B8B;">{{ r['worker_phone'] or '' }}</span>
+                </td>
+                <td>
+                  <strong>{{ r['household_name'] }}</strong>
+                  <br><span class="mono-small">Ward {{ r['ward_no'] }} · {{ r['area'] }} · H.No {{ r['house_no'] }}</span>
+                  <br><span class="mono-small" style="color:#8B8B8B;">{{ r['phone'] }}</span>
+                </td>
+                <td>
+                  {% if r['status']=='Pending' %}
+                    <span class="status-pending">{{ r['status'] }}</span>
+                  {% elif r['status']=='Completed' %}
+                    <span class="status-completed">{{ r['status'] }}</span>
+                  {% elif r['status']=='Assigned' %}
+                    <span class="status-assigned">{{ r['status'] }}</span>
+                  {% else %}
+                    <span class="status-rejected">{{ r['status'] }}</span>
+                  {% endif %}
+
+                  {% if r['is_stuck_over_1hr'] %}
+                    <br><span class="badge-stuck-warning">⚠️ Pending > 1 hr</span>
+                  {% endif %}
+                </td>
+                <td><span style="font-family:'Fraunces'; font-weight:600;">{{ r['waste_type'] or '-' }}</span></td>
+                <td>
+                  {% if r['weight_details'] and ',' in r['weight_details'] %}
+                    <span style="font-size:12px; font-weight:700;">{{ r['weight_details'] }}</span><br><small style="color:#6B7280; font-weight:700;">(Total: {{ r['weight_kg']|round(2) }} kg)</small>
+                  {% elif r['weight_details'] %}
+                    <strong>{{ r['weight_details'] }}</strong>
+                  {% else %}
+                    <strong>{{ r['weight_kg']|round(2) if r['weight_kg'] else 0 }} kg</strong>
+                  {% endif %}
+                </td>
+                <td><strong style="color:#1A3C34;">{{ r['points'] or 0 }} pts</strong></td>
+                <td class="mono-small">{{ r['created_at'].strftime('%H:%M') if r['created_at'] else '-' }}</td>
+                <td>
+                  {% if r['status'] in ['Pending','Assigned'] %}
+                  <form action="/admin/reassign_request/{{ r['id'] }}" method="POST" style="display:flex; gap:4px; align-items:center;">
+                    <select name="worker_id" required style="font-size:11px; padding:4px; border-radius:6px; border:1px solid {% if r['is_worker_on_leave'] or r['is_stuck_over_1hr'] %}#DC2626{% else %}#ccc{% endif %}; max-width:140px; background:{% if r['is_worker_on_leave'] or r['is_stuck_over_1hr'] %}#FFF5F5{% else %}#fff{% endif %};">
+                      <option value="">Reassign to...</option>
+                      {% for wk in workers_all %}
+                      <option value="{{ wk['worker_id'] }}" {% if r['worker_id'] == wk['worker_id'] %}selected{% endif %}>{{ wk['full_name'] }} (W{{ wk['ward_no'] }})</option>
+                      {% endfor %}
+                    </select>
+                    <button type="submit" style="font-size:10px; background:{% if r['is_worker_on_leave'] or r['is_stuck_over_1hr'] %}#DC2626{% else %}#1A3C34{% endif %}; color:#fff; border:none; padding:6px 10px; border-radius:6px; font-weight:700; cursor:pointer;">
+                      {% if r['is_worker_on_leave'] or r['is_stuck_over_1hr'] %}Reassign Worker{% else %}Assign{% endif %}
+                    </button>
+                  </form>
+                  {% else %}
+                  <span class="mono" style="font-size:11px;">-</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="9" style="text-align:center; padding:30px; color:#8B8B8B;">No requests coming today.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    function toggleMenu(){
+      document.getElementById('userMenu').classList.toggle('show');
+    }
+    window.addEventListener('click', function(e){
+      if(!e.target.closest('.user-chip-wrapper')){
+        document.getElementById('userMenu')?.classList.remove('show');
+      }
+    });
+
+    function filterRequestsTable() {
+      const input = document.getElementById('searchInput').value.toLowerCase();
+      const table = document.getElementById('requestsTable');
+      const trs = table.getElementsByTagName('tr');
+      for (let i = 1; i < trs.length; i++) {
+        const text = trs[i].innerText.toLowerCase();
+        trs[i].style.display = text.includes(input) ? '' : 'none';
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Households - EcoCycle Admin</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/view_workers.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/view_households.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pending_households.css') }}" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon">EC</div><span>EcoCycle Admin</span></div>
+    <nav class="sidebar-nav">
+      <p class="nav-section">OVERVIEW</p>
+      <a href="{{ url_for('admin_dashboard') }}" class="nav-item">Dashboard</a>  
+      <p class="nav-section">HOUSEHOLDS</p>
+      <a href="/pending_households" class="nav-item">Pending Approvals <span class="badge">{{pending_count}}</span></a>
+      <a href="/view_households" class="nav-item active">All Households</a>      
+    </nav>
+  </aside>
+  <main class="main">
+    <header class="main-header">
+      <div>
+        <h1 class="page-title">All Households</h1>
+        <p class="page-subtitle">HOUSEHOLDS · {{ households|length }}</p>
+      </div>
+    </header>
+    <div class="toolbar">
+      <div class="search-box"><span>🔍</span><input type="text" id="searchInput" placeholder="Search..." onkeyup="filterHouseholds()"></div>
+      <div class="filters">
+        <select class="select" id="areaFilter" onchange="filterHouseholds()">
+          <option value="all">All Areas</option>
+          {% for area in areas %}<option value="{{ area['area_name'] }}">{{ area['area_name'] }}</option>{% endfor %}
+        </select>
+        <select class="select" id="wardFilter" onchange="filterHouseholds()">
+          <option value="all">All Wards</option>
+          {% for w in all_wards %}<option value="{{ w['ward_no'] }}">Ward {{ w['ward_no'] }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    <section class="card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>HOUSEHOLD</th><th>CONTACT</th><th>WARD</th><th>HOUSE NO</th><th>LOCATION/AADHAAR</th><th>POINTS</th><th>ACTION</th></tr></thead>
+          <tbody id="householdsTable">
+          {% for h in households %}
+          <tr data-name="{{ h['full_name']|lower }}" data-email="{{ h['email']|lower }}" data-phone="{{ h['phone'] }}" data-area="{{ h['area'] }}" data-ward="{{ h['ward_no'] }}" data-house="{{ h['house_no'] }}">
+            <td><div class="worker-cell"><div class="worker-avatar household-avatar">{{ h['full_name'][:2]|upper }}</div><div class="worker-meta"><span class="w-name">{{ h['full_name'] }}</span><small class="mono-small">ID: #H{{1000+h['household_id']}} · {{ h['area'] }}</small></div></div></td>
+            <td><div class="mono-small">📧 {{ h['email'] }}</div><div style="font-size:13px;">📱 {{ h['phone'] }}</div><div style="font-size:11px; color:#7b947d;">UPI: {{ h['upi_id'] or '—' }}</div></td>
+            <td><span class="ward-pill">{{ h['ward_no'] }}</span></td>
+            <td><span class="house-pill">{{ h['house_no'] }}</span></td>
+            <td><button class="btn btn-view" onclick="toggleDetails(this, {{ h['household_id'] }})">📍 View</button></td>
+            <td><span class="points-badge">{{ h['reward_wallet'] }} pts</span></td>
+            <td><div class="action-btns"><button class="btn btn-edit" onclick="openEditModal({{ h['household_id'] }})">EDIT</button><button class="btn btn-delete" onclick="openDeleteModal({{ h['household_id'] }}, '{{ h['full_name'] }}')">DELETE</button></div></td>
+          </tr>
+          <tr id="detailsRow{{ h['household_id'] }}" class="details-row" style="display:none;"><td colspan="7"><div class="details-container"><div class="aadhaar-box"><h3>Aadhaar Photo</h3><img id="aadhaarImg{{ h['household_id'] }}" class="aadhaar-image" src=""></div><div class="map-box"><h3>Location</h3><div id="map{{ h['household_id'] }}" class="house-map"></div></div></div></td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+<div class="modal-overlay" id="editModal">
+    <div class="modal">
+        <h3>Edit Household</h3>
+        <p class="helper">Email, Phone, Aadhaar locked. Ward, Area, House No editable.</p>
+        <form id="editForm">
+            <input type="hidden" id="editId">
+            <div class="form-grid">
+                <div class="form-group full editable-field"><label>Full Name <span class="edit-tag">✏ Editable</span></label><input type="text" id="editFullName" name="full_name" required></div>
+                <div class="form-group locked-field"><label>Email <span class="lock-tag">🔒 Locked</span></label><input type="email" id="editEmail" disabled></div>
+                <div class="form-group locked-field"><label>Phone <span class="lock-tag">🔒 Locked</span></label><input type="text" id="editPhone" disabled></div>
+                <div class="form-group editable-field"><label>Ward <span class="edit-tag">✏ Editable</span></label><select id="editWard" name="ward_no" required>{% for w in all_wards %}<option value="{{ w['ward_no'] }}">Ward {{ w['ward_no'] }}</option>{% endfor %}</select></div>
+                <div class="form-group editable-field"><label>Area <span class="edit-tag">✏ Editable</span></label><select id="editArea" name="area" required><option value="">Select Area</option></select></div>
+                <div class="form-group editable-field"><label>House No <span class="edit-tag">✏ Editable</span></label><input type="text" id="editHouse" name="house_no" required></div>
+                <div class="form-group full locked-field"><label>Aadhaar Photo</label><div class="aadhaar-preview">Aadhaar Verified</div></div>
+            </div>
+            <div class="modal-actions"><button type="button" class="btn-secondary" onclick="closeEditModal()">CANCEL</button><button type="submit" class="btn-primary">SAVE →</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="modal-overlay" id="deleteModal"><div class="modal small"><h3>Delete Household?</h3><p id="deleteText" class="helper">This action cannot be undone.</p><div class="modal-actions"><button class="btn-secondary" onclick="closeDeleteModal()">CANCEL</button><button class="btn btn-reject" onclick="confirmDelete()">YES, DELETE</button></div></div></div>
+
+<div id="toast" class="toast"></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- SAME PAGE FIX FOR WARD -> AREA -->
+<script>
+// override edit functions to load area by ward
+async function loadAreasForWard(ward_no, selectedArea=''){
+  const sel=document.getElementById('editArea');
+  sel.innerHTML='<option>Loading...</option>';
+  const res=await fetch(`/get_areas_by_ward/${ward_no}`);
+  const data=await res.json();
+  sel.innerHTML='<option value="">Select Area</option>';
+  data.forEach(a=>{
+    const opt=document.createElement('option');
+    opt.value=a; opt.textContent=a;
+    if(a===selectedArea) opt.selected=true;
+    sel.appendChild(opt);
+  });
+  if(selectedArea && ![...sel.options].some(o=>o.value===selectedArea)){
+    const opt=document.createElement('option');
+    opt.value=selectedArea; opt.textContent=selectedArea+' (old)'; opt.selected=true;
+    sel.appendChild(opt);
+  }
+}
+window.openEditModal = async function(id){
+  const r=await fetch(`/api/households/${id}`);
+  const res=await r.json();
+  if(!res.success) return alert(res.message);
+  const h=res.household;
+  document.getElementById('editId').value=h.id;
+  document.getElementById('editFullName').value=h.full_name;
+  document.getElementById('editEmail').value=h.email;
+  document.getElementById('editPhone').value=h.phone;
+  document.getElementById('editHouse').value=h.house_no;
+  document.getElementById('editWard').value=h.ward_no;
+  document.getElementById('editModal').style.display='flex';
+  document.getElementById('editModal').classList.add('show');
+  await loadAreasForWard(h.ward_no, h.area);
+};
+document.getElementById('editWard').addEventListener('change', function(){
+  loadAreasForWard(this.value, '');
+});
+
+// FIX: Remove letters validation
+const oldForm = document.getElementById('editForm');
+const newForm = oldForm.cloneNode(true);
+oldForm.parentNode.replaceChild(newForm, oldForm);
+
+newForm.addEventListener('submit', async function(e){
+    e.preventDefault();
+    const id = document.getElementById('editId').value;
+    const payload = {
+      full_name: document.getElementById('editFullName').value.trim(),
+      ward_no: document.getElementById('editWard').value,
+      area: document.getElementById('editArea').value,
+      house_no: document.getElementById('editHouse').value.trim()
+    };
+    if(payload.full_name.length < 2){ alert("Name min 2 chars"); return; }
+    // NO LETTERS CHECK
+    const res = await fetch(`/api/households/${id}`,{
+        method:"PUT",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify(payload)
+    });
+    const json = await res.json();
+    const t=document.getElementById('toast');
+    t.textContent=json.message; t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),2500);
+    if(json.success){
+        document.getElementById('editModal').style.display='none';
+        document.getElementById('editModal').classList.remove('show');
+        setTimeout(()=>location.reload(),600);
+    }
+});
+</script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+let deleteId=null, expandedRow=null, expandedMap=null;
+function filterHouseholds(){
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  const area=document.getElementById('areaFilter').value.toLowerCase();
+  const ward=document.getElementById('wardFilter').value.toLowerCase();
+  document.querySelectorAll('#householdsTable tr[data-name]').forEach(tr=>{
+    const name=tr.dataset.name||''; const a=(tr.dataset.area||'').toLowerCase(); const w=(tr.dataset.ward||'').toString().toLowerCase();
+    const matchSearch=!q||name.includes(q)||a.includes(w)||w.includes(q); 
+    const matchArea=area==='all'||a===area; const matchWard=ward==='all'||w===ward;
+    tr.style.display=(matchSearch&&matchArea&&matchWard)?'':'none';
+  });
+}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+async function loadAreasForWard(ward_no, selectedArea=''){
+  const sel=document.getElementById('editArea'); sel.innerHTML='<option>Loading...</option>';
+  const res=await fetch(`/get_areas_by_ward/${ward_no}`); const data=await res.json();
+  sel.innerHTML='<option value="">Select Area</option>';
+  data.forEach(a=>{const o=document.createElement('option');o.value=a;o.textContent=a;if(a===selectedArea)o.selected=true;sel.appendChild(o);});
+  if(selectedArea && ![...sel.options].some(o=>o.value===selectedArea)){
+    const o=document.createElement('option');o.value=selectedArea;o.textContent=selectedArea+' (old)';o.selected=true;sel.appendChild(o);
+  }
+}
+async function openEditModal(id){
+  const r=await fetch(`/api/households/${id}`); const res=await r.json();
+  if(!res.success){toast(res.message);return;}
+  const h=res.household;
+  document.getElementById('editId').value=h.id;
+  document.getElementById('editFullName').value=h.full_name;
+  document.getElementById('editEmail').value=h.email;
+  document.getElementById('editPhone').value=h.phone;
+  document.getElementById('editHouse').value=h.house_no;
+  document.getElementById('editWard').value=h.ward_no;
+  document.getElementById('editModal').style.display='flex';
+  document.getElementById('editModal').classList.add('show');
+  await loadAreasForWard(h.ward_no, h.area);
+}
+function closeEditModal(){document.getElementById('editModal').style.display='none';document.getElementById('editModal').classList.remove('show');}
+function openDeleteModal(id,name){deleteId=id;document.getElementById('deleteText').textContent=`Delete "${name}"?`;document.getElementById('deleteModal').style.display='flex';document.getElementById('deleteModal').classList.add('show');}
+function closeDeleteModal(){deleteId=null;document.getElementById('deleteModal').style.display='none';document.getElementById('deleteModal').classList.remove('show');}
+async function confirmDelete(){const res=await fetch(`/api/households/${deleteId}`,{method:'DELETE'});const j=await res.json();toast(j.message||'Deleted');if(j.success)setTimeout(()=>location.reload(),600);}
+document.getElementById('editWard').addEventListener('change',function(){loadAreasForWard(this.value,'');});
+document.getElementById('editForm').addEventListener('submit', async function(e){
+  e.preventDefault();
+  const id=document.getElementById('editId').value;
+  const payload={full_name:document.getElementById('editFullName').value.trim(), ward_no:document.getElementById('editWard').value, area:document.getElementById('editArea').value, house_no:document.getElementById('editHouse').value.trim()};
+  if(payload.full_name.length<2){toast('Min 2 chars');return;}
+  const res=await fetch(`/api/households/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  const json=await res.json(); toast(json.message);
+  if(json.success){closeEditModal();setTimeout(()=>location.reload(),600);}
+});
+async function toggleDetails(btn,hid){
+  const row=btn.closest('tr');
+  if(expandedRow&&expandedRow.previousElementSibling===row){if(expandedMap)expandedMap.remove();expandedRow.remove();expandedRow=null;expandedMap=null;return;}
+  if(expandedRow){if(expandedMap)expandedMap.remove();expandedRow.remove();}
+  const res=await fetch(`/api/households/${hid}`); const json=await res.json(); const h=json.household;
+  const dr=document.createElement('tr');dr.className='details-row';dr.innerHTML=`<td colspan="8"><div class="details-container"><div class="aadhaar-box"><h3>Aadhaar</h3><img class="aadhaar-image" src="/static/${h.aadhaar_photo}"></div><div class="map-box"><h3>Location</h3><div class="house-map" id="houseMap${hid}"></div></div></div></td>`;
+  row.after(dr);expandedRow=dr;
+  setTimeout(()=>{expandedMap=L.map(`houseMap${hid}`).setView([parseFloat(h.lat),parseFloat(h.lng)],15);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(expandedMap);L.marker([parseFloat(h.lat),parseFloat(h.lng)]).addTo(expandedMap);},100);
+}
+</script>
+
+</body>
+</html>

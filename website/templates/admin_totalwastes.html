@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EcoCycle Admin — Total Waste Collection History</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_dashboard.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pending_households.css') }}" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 22px; }
+    .stat-card { background: #fff; border: 1px solid #E5E7EB; border-radius: 14px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+    .stat-value { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 700; display: block; margin-bottom: 4px; color: #1A3C34; }
+    .stat-label { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .table-wrap { overflow-x: auto; background: #fff; border: 1px solid #E5E7EB; border-radius: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th { background: #F9FAFB; font-family: 'JetBrains Mono', monospace; font-size: 11px; text-transform: uppercase; color: #4B5563; padding: 14px 18px; border-bottom: 1px solid #E5E7EB; }
+    td { padding: 14px 18px; font-size: 13px; color: #111827; border-bottom: 1px solid #F3F4F6; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    .mono-small { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6B7280; }
+    .ward-pill { background: #E5E7EB; color: #374151; padding: 3px 8px; border-radius: 6px; font-family: 'JetBrains Mono'; font-size: 11px; font-weight: 700; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon">EC</div><span>EcoCycle Admin</span></div>
+    <nav class="sidebar-nav">
+      <p class="nav-section">OVERVIEW</p>
+      <a href="{{ url_for('admin_dashboard') }}" class="nav-item">Dashboard</a>
+      <a href="{{ url_for('admin_todays_requests') }}" class="nav-item">📋 Today's Requests</a>
+      <a href="/admin/collhistory" class="nav-item active">📦 Collection History</a>
+      <p class="nav-section">HOUSEHOLDS</p>
+      <a href="{{ url_for('pending_households') }}" class="nav-item"><span>Pending Approvals</span><span class="badge">{{ pending_count }}</span></a>
+      <a href="{{ url_for('view_households') }}" class="nav-item">All Households</a>
+      <a href="{{ url_for('admin_feedbacks') }}" class="nav-item">Feedbacks & Complaints 💬</a>
+      <p class="nav-section">WORKFORCE</p>
+      <a href="{{ url_for('view_workers') }}" class="nav-item">Collection Workers</a>
+      <a href="{{ url_for('add_worker') }}" class="nav-item">Add Worker</a>
+      <a href="/admin/worker_leaves" class="nav-item">📅 Worker Leaves</a>
+      <a href="{{ url_for('view_staff') }}" class="nav-item">Recycling Staff</a>
+      <a href="{{ url_for('add_staff') }}" class="nav-item">Add Staff</a>
+      <p class="nav-section">CONFIGURATION</p>
+      <a href="{{ url_for('add_area') }}" class="nav-item">Wards & Areas</a>
+      <a href="{{ url_for('wastes_rewards') }}" class="nav-item">Waste Categories</a>
+      <a href="{{ url_for('recycled_products') }}" class="nav-item">Recycled Products</a>
+      <p class="nav-section">REVENUE</p>
+      <a href="/admin/viewinventory" class="nav-item">Inventory</a>
+      <a href="{{ url_for('admin_viewsales') }}" class="nav-item">Sales Log</a>
+      <p class="nav-section">REWARDS</p>
+      <a href="{{ url_for('admin_rewards_redeem') }}" class="nav-item">Redeem Requests</a>
+    </nav>
+  </aside>
+
+  <!-- Main Area -->
+  <main class="main">
+    <header class="main-header">
+      <div>
+        <h1 class="page-title">Total Waste Collection History</h1>
+        <p class="page-subtitle">{{ today_date }} · All-time collected wastes log</p>
+      </div>
+    </header>
+
+    <!-- Stats Grid -->
+    <section class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-value" style="color:#059669;">{{ "%.1f"|format(totals['total_kg']|float) }} kg</span>
+        <span class="stat-label">Total Waste Collected (KG)</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value" style="color:#D97706;">{{ totals['total_pts']|int }} pts</span>
+        <span class="stat-label">Total Eco Points Awarded</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value" style="color:#2563EB;">{{ totals['total_cnt'] }}</span>
+        <span class="stat-label">Total Pickup Records</span>
+      </div>
+    </section>
+
+    <!-- Filter & Search Toolbar -->
+    <div class="toolbar" style="margin-bottom:18px; display:flex; gap:12px;">
+      <div class="search-box" style="flex:1;">
+        <span>🔍</span>
+        <input type="text" id="searchInput" placeholder="Search by household, worker, category, area..." onkeyup="filterWastes()">
+      </div>
+    </div>
+
+    <!-- Table -->
+    <section class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>DATE & TIME</th>
+            <th>HOUSEHOLD DETAILS</th>
+            <th>WORKER DETAILS</th>
+            <th>WASTE CATEGORY</th>
+            <th>WEIGHT (KG)</th>
+            <th>POINTS AWARDED</th>
+          </tr>
+        </thead>
+        <tbody id="wasteTableBody">
+          {% for c in all_collected_wastes %}
+          <tr data-search="{{ c['household_name']|lower }} {{ c['area']|lower }} {{ (c['worker_name'] or '')|lower }} {{ (c['waste_type'] or '')|lower }}">
+            <td class="mono-small">{{ loop.index }}</td>
+            <td class="mono-small">{{ c['created_at'].strftime('%d-%m-%Y %I:%M %p') if c['created_at'] else '-' }}</td>
+            <td>
+              <strong>{{ c['household_name'] }}</strong><br>
+              <span class="mono-small"><span class="ward-pill">Ward {{ c['ward_no'] }}</span> {{ c['area'] }} · H.No {{ c['house_no'] }}</span>
+            </td>
+            <td>
+              <strong>{{ c['worker_name'] or 'Worker' }}</strong><br>
+              <span class="mono-small">{{ c['worker_phone'] or '' }}</span>
+            </td>
+            <td><strong style="font-family:'Fraunces'; color:#1A3C34;">{{ c['waste_type'] or '-' }}</strong></td>
+            <td>
+              {% if c['weight_details'] and ',' in c['weight_details'] %}
+                <strong style="font-size:12px;">{{ c['weight_details'] }}</strong><br><small style="color:#059669; font-weight:700;">(Total: {{ c['weight_kg']|round(2) }} kg)</small>
+              {% elif c['weight_details'] %}
+                <strong style="font-size:13px;">{{ c['weight_details'] }}</strong>
+              {% else %}
+                <strong style="font-size:14px;">{{ c['weight_kg'] or 0 }} kg</strong>
+              {% endif %}
+            </td>
+            <td><strong style="color:#059669;">{{ c['points'] or 0 }} pts</strong></td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" style="text-align:center; padding:40px; color:#6B7280;">No waste collections recorded yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </main>
+</div>
+
+<script>
+function filterWastes() {
+  const query = document.getElementById('searchInput').value.toLowerCase().trim();
+  const rows = document.querySelectorAll('#wasteTableBody tr');
+  rows.forEach(row => {
+    const search = row.dataset.search || '';
+    if (!query || search.includes(query)) {
+      row.style.display = '';
+    } else {
+      row.style.display = 'none';
+    }
+  });
+}
+</script>
+</body>
+</html>
